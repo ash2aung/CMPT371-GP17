@@ -2,8 +2,8 @@ package game;
 
 
 public class Maze {
-    final static int NUM_OF_COLUMNS = 20;
-    final static int NUM_OF_ROWS = 30;
+    final static int NUM_OF_COLUMNS = 5;
+    final static int NUM_OF_ROWS = 10;
 
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
@@ -16,21 +16,21 @@ public class Maze {
 
     public Maze () {
         // Create board
-        maze = new MazeBuilder(NUM_OF_COLUMNS, NUM_OF_ROWS).getMaze();
+        maze = new MazeBuilder(NUM_OF_ROWS, NUM_OF_COLUMNS).getMaze();
 
         // Add players to board
-        addPlayerToBoard(0, 1, 1);
-        addPlayerToBoard(1, 18, 1);
-        addPlayerToBoard(2, 1, 28);
-        addPlayerToBoard(3, 18, 28);
+        addPlayerToBoard(0, 2, 1);
+//        addPlayerToBoard(1, 18, 1);
+//        addPlayerToBoard(2, 1, 28);
+//        addPlayerToBoard(3, 18, 28);
 
         printMaze();
 
     }
 
-    private void addPlayerToBoard(int playerId, int col, int row) {
+    private void addPlayerToBoard(int playerId, int row, int col) {
         players[playerId] = new Player(playerId, col, row);
-        maze[col][row] = players[playerId];
+        maze[row][col] = players[playerId];
         updateVisibilityAroundPlayer(players[playerId]);
     }
 
@@ -40,22 +40,12 @@ public class Maze {
      * that only validated PlayerMoves are given.
      */
     public void movePlayer(int playerId, int row, int col) {
-
+//        updatePlayerPosition(players[playerId], col, row);
         updatePlayerPosition(players[playerId], row, col);
         updateVisibilityAroundPlayer(players[playerId]);
         printMaze();
     }
 
-    /**
-     * Sets all spaces on the board to visible
-     */
-    public void revealMaze() {
-        for (int col = 0; col < NUM_OF_COLUMNS; col++) {
-            for (int row = 0; row < NUM_OF_ROWS; row++) {
-                maze[col][row].setVisible();
-            }
-        }
-    }
 
     /**
      * Temporary function. May be replaced when Canvas comes in.
@@ -65,21 +55,22 @@ public class Maze {
     public void moveWithUserInput(char key) {
         Player user = players[userId];
 
-        int userCol = user.getCol();
         int userRow = user.getRow();
+        int userCol = user.getCol();
+
 
         switch (key) {
             case 'w':
-                processPlayerMove(userCol, userRow - 1);
+                processPlayerMove(userRow - 1, userCol);    // up
                 break;
             case 'a':
-                processPlayerMove(userCol - 1, userRow);
+                processPlayerMove(userRow, userCol - 1);    // left
                 break;
             case 's':
-                processPlayerMove(userCol, userRow + 1);
+                processPlayerMove(userRow + 1, userCol);    // down
                 break;
             case 'd':
-                processPlayerMove(userCol + 1, userRow);
+                processPlayerMove(userRow, userCol + 1);    // right
                 break;
         }
     }
@@ -88,13 +79,13 @@ public class Maze {
      * This function validates and process each player move. If invalid, do nothing
      * If valid, then move the player accordingly (by calling the relevant functions)
      */
-    private void processPlayerMove(int col, int row) {
-        MazeObject temp = maze[col][row];
+    private void processPlayerMove(int row, int col) {
+        MazeObject temp = maze[row][col];
         if (temp instanceof Cheese) {
             // this is a cheese, deal with it
         } else if (!temp.isPassable()) {
             // this is a wall, deal with it
-            System.out.println("Wall at " + col + ", " + row);
+            System.out.println("Wall at " + row + ", " + col);
         } else {
             movePlayer(userId, row, col);
         }
@@ -105,16 +96,17 @@ public class Maze {
      * Makes all directly adjacent squares visible to the player
      */
     private void updateVisibilityAroundPlayer(Player p) {
-        int playerCol = p.getCol();
         int playerRow = p.getRow();
-        maze[playerCol - 1][playerRow + 1].setVisible(); // Top left
-        maze[playerCol][playerRow + 1].setVisible(); // Top mid
-        maze[playerCol + 1][playerRow + 1].setVisible(); // Top right
-        maze[playerCol - 1][playerRow].setVisible(); // Mid left
-        maze[playerCol + 1][playerRow].setVisible(); // Mid right
-        maze[playerCol - 1][playerRow - 1].setVisible(); // Bot left
-        maze[playerCol][playerRow - 1].setVisible(); // Bot mid
-        maze[playerCol + 1][playerRow - 1].setVisible(); // Bot right
+        int playerCol = p.getCol();
+
+        maze[playerRow - 1][playerCol - 1].setVisible(); // Top left
+        maze[playerRow - 1][playerCol].setVisible(); // Top mid
+        maze[playerRow - 1][playerCol + 1].setVisible(); // Top right
+        maze[playerRow][playerCol - 1].setVisible(); // Mid left
+        maze[playerRow][playerCol + 1].setVisible(); // Mid right
+        maze[playerRow + 1][playerCol - 1].setVisible(); // Bot left
+        maze[playerRow + 1][playerCol].setVisible(); // Bot mid
+        maze[playerRow + 1][playerCol + 1].setVisible(); // Bot right
     }
 
     /**
@@ -125,13 +117,13 @@ public class Maze {
      * @param col
      * @param row
      */
-    private void updatePlayerPosition(Player p, int col, int row) {
-        maze[col][row] = p;
+    private void updatePlayerPosition(Player p, int row, int col) {
+        maze[row][col] = p;
 
-        maze[p.getCol()][p.getRow()] = new MazeObject(true);
+        maze[p.getRow()][p.getCol()] = new MazeObject(true);
 
-        p.setCol(col);
         p.setRow(row);
+        p.setCol(col);
     }
 
     public MazeObject[][] getMaze() {
@@ -139,12 +131,15 @@ public class Maze {
     }
 
     public void printMaze() {
-        for (int col = 0; col < NUM_OF_COLUMNS; col++) {
-            for (int row = 0; row < NUM_OF_ROWS; row++) {
-                printMazeObject(maze[col][row]);
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                printMazeObject(maze[row][col]);
             }
             System.out.println();
         }
+
+        // debug line
+        System.out.println("You are at " + players[userId].getRow() + ", " + players[userId].getCol());
     }
 
     public void printMazeObject(MazeObject obj) {
@@ -164,9 +159,9 @@ public class Maze {
     }
 
     public void revealEntireMaze() {
-        for (int col = 0; col < NUM_OF_COLUMNS; col++) {
-            for (int row = 0; row < NUM_OF_ROWS; row++) {
-                maze[col][row].setVisible();
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                maze[row][col].setVisible();
             }
         }
         printMaze();
