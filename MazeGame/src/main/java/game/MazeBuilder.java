@@ -229,19 +229,6 @@ public final class MazeBuilder {
         }
     }
 
-    public MazeObject[][] invert(MazeObject[][] maze) {
-        int rows1 = maze.length;
-        int cols1 = maze[0].length;
-
-        MazeObject[][] inverted = new MazeObject[cols1][rows1];
-
-        for (int r = 0; r < rows1; r++) {
-            for (int c = 0; c < cols1; c++) {
-                inverted[c][r] = maze[r][c];
-            }
-        }
-        return inverted;
-    }
 
 
 }
