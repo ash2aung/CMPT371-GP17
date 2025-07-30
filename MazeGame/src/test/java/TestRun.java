@@ -21,7 +21,7 @@ public class TestRun {
 //
 //            PlayerMove move = new PlayerMove(id, row, col);
 //            maze.movePlayer(id, row, col);
-            System.out.println("Key: ");
+            System.out.print("Key: ");
             String tempInput = input.nextLine();
             char key = tempInput.charAt(0);
             maze.moveWithUserInput(key);
