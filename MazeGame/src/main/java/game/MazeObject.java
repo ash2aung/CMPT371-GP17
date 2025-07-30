@@ -66,6 +66,30 @@ public class MazeObject {
     }
 
     /**
+     * Maze was inverted, so things happen
+     * @return The actual row that'd print on the screen
+     */
+    public int getActualRow() {
+        return col;
+    }
+
+    /**
+     * Maze was inverted, so things happen
+     * @return The actual col that'd print on the screen
+     */
+    public int getActualCol() {
+        return row;
+    }
+
+    public void setActualRow(int row) {
+        this.col = row;
+    }
+
+    public void setActualCol(int col) {
+        this.row = col;
+    }
+
+    /**
      * Returns this object's column
      * @return col: this object's column
      */
