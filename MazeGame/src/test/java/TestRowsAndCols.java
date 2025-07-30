@@ -35,7 +35,7 @@ public class TestRowsAndCols {
         int numCol = 10;
         MazeBuilder builder = new MazeBuilder(numRow, numCol);
         MazeObject[][] maze = builder.getMaze();
-        MazeObject[][] maze2 = builder.invert(maze);
+
 
         printMaze(maze, numRow, numCol);
         System.out.println("Num rows: " + maze.length);
