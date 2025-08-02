@@ -4,8 +4,8 @@ package game;
 import java.util.Random;
 
 public class Maze {
-    final static int NUM_OF_COLUMNS = 15;
-    final static int NUM_OF_ROWS = 20;
+    final static int NUM_OF_COLUMNS = 10;
+    final static int NUM_OF_ROWS = 15;
 
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
@@ -36,19 +36,6 @@ public class Maze {
         updateVisibilityAroundPlayer(players[playerId]);
     }
 
-    /**
-     * It reads PlayerMove packets applies the moves as indicated in the packet.
-     * This function does to need to validate whether the movement is valid. It assumes
-     * that only validated PlayerMoves are given.
-     */
-    public void movePlayer(int playerId, int row, int col) {
-//        updatePlayerPosition(players[playerId], col, row);
-        updatePlayerPosition(players[playerId], row, col);
-        updateVisibilityAroundPlayer(players[playerId]);
-        notifyClientAboutUserMove();
-        printMaze();
-    }
-
 
     /**
      * Temporary function. May be replaced when Canvas comes in.
@@ -64,16 +51,16 @@ public class Maze {
 
         switch (key) {
             case 'w':
-                processPlayerMove(userRow - 1, userCol);    // up
+                processPlayerMove(userId, userRow - 1, userCol);    // up
                 break;
             case 'a':
-                processPlayerMove(userRow, userCol - 1);    // left
+                processPlayerMove(userId, userRow, userCol - 1);    // left
                 break;
             case 's':
-                processPlayerMove(userRow + 1, userCol);    // down
+                processPlayerMove(userId, userRow + 1, userCol);    // down
                 break;
             case 'd':
-                processPlayerMove(userRow, userCol + 1);    // right
+                processPlayerMove(userId, userRow, userCol + 1);    // right
                 break;
         }
     }
@@ -81,18 +68,53 @@ public class Maze {
     /**
      * This function validates and process each player move. If invalid, do nothing
      * If valid, then move the player accordingly (by calling the relevant functions)
+     * This method can be used by ANY/ALL players
      */
-    private void processPlayerMove(int row, int col) {
+    public void processPlayerMove(int playerId, int row, int col) {
         MazeObject temp = maze[row][col];
         if (temp instanceof Cheese) {
-            // this is a cheese, deal with it
-            userCollectedCheese();
+            cheeseFound(playerId, row, col);
+
         } else if (!temp.isPassable()) {
             // this is a wall, deal with it
             System.out.println("Wall at " + row + ", " + col);
+
         } else {
             movePlayer(userId, row, col);
         }
+    }
+
+    private void cheeseFound(int playerId, int row, int col) {
+        if (playerId == userId) {
+            notifyClientThatUserCollectedCheese();
+
+            // then add a line of code to increment cheese if verified
+            players[playerId].addCheeseCount();
+            movePlayer(playerId, row, col);
+
+        } else {
+            players[playerId].addCheeseCount();
+            movePlayer(playerId, row, col);
+        }
+
+        System.out.println("Cheese claimed by player " + playerId);
+        System.out.println("Player " + playerId + " has "
+                + players[playerId].getCheeseCount() + " cheese.");
+
+
+    }
+
+    /**
+     * It reads PlayerMove packets applies the moves as indicated in the packet.
+     * This function does to need to validate whether the movement is valid. It assumes
+     * that only validated PlayerMoves are given.
+     */
+    private void movePlayer(int playerId, int row, int col) {
+//        updatePlayerPosition(players[playerId], col, row);
+        updatePlayerPosition(players[playerId], row, col);
+        updateVisibilityAroundPlayer(players[playerId]);
+        notifyClientAboutUserMove();
+        printMaze();
     }
 
 
@@ -172,16 +194,8 @@ public class Maze {
     }
 
     // debug space
-    public void findCheese() {
-        for (int row = 0; row < NUM_OF_ROWS; row++) {
-            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
-                MazeObject temp = maze[row][col];
-                if (temp instanceof Cheese) {
-                    System.out.println("FOUND CHEESE AT " + row + ", " + col);
-                }
-            }
-        }
-    }
+
+    // debug space end
 
 
     // The following code is for the server to use:
@@ -218,7 +232,7 @@ public class Maze {
      * This method is called when the player (user) moves onto a cheese block. They
      * will call this method, and client programmer can fill out the code
      */
-    public void userCollectedCheese() {}
+    public void notifyClientThatUserCollectedCheese() {}
 
 
     /**
