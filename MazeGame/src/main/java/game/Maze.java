@@ -1,9 +1,11 @@
 package game;
 
 
+import java.util.Random;
+
 public class Maze {
-    final static int NUM_OF_COLUMNS = 5;
-    final static int NUM_OF_ROWS = 10;
+    final static int NUM_OF_COLUMNS = 15;
+    final static int NUM_OF_ROWS = 20;
 
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
@@ -19,10 +21,10 @@ public class Maze {
         maze = new MazeBuilder(NUM_OF_ROWS, NUM_OF_COLUMNS).getMaze();
 
         // Add players to board
-        addPlayerToBoard(0, 2, 1);
-//        addPlayerToBoard(1, 18, 1);
-//        addPlayerToBoard(2, 1, 28);
-//        addPlayerToBoard(3, 18, 28);
+        addPlayerToBoard(0, 1, 1);  // top left
+       addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
+        addPlayerToBoard(2, NUM_OF_ROWS - 2, 1);     // bottom left
+        addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
 
         printMaze();
 
@@ -43,6 +45,7 @@ public class Maze {
 //        updatePlayerPosition(players[playerId], col, row);
         updatePlayerPosition(players[playerId], row, col);
         updateVisibilityAroundPlayer(players[playerId]);
+        notifyClientAboutUserMove();
         printMaze();
     }
 
@@ -83,6 +86,7 @@ public class Maze {
         MazeObject temp = maze[row][col];
         if (temp instanceof Cheese) {
             // this is a cheese, deal with it
+            userCollectedCheese();
         } else if (!temp.isPassable()) {
             // this is a wall, deal with it
             System.out.println("Wall at " + row + ", " + col);
@@ -166,5 +170,48 @@ public class Maze {
         }
         printMaze();
     }
+
+    // The following code is for the server to use:
+
+    /**
+     * Right after generating a map, the server will also generate a cheese using
+     * this method. Then it will distribute the Map and other elements to all players
+     * Whenever a Cheese is verified to be eaten, the server will call this method again
+     * to replace a new cheese.
+     */
+    public void placeCheeseRandomly() {
+        int cheeseRow;
+        int cheeseCol;
+        Random random = new Random();
+
+        while (true) {
+            cheeseRow = random.nextInt(NUM_OF_ROWS);
+            cheeseCol = random.nextInt(NUM_OF_COLUMNS);
+
+            MazeObject temp = maze[cheeseRow][cheeseCol];
+            // If not a wall or a player, place cheese there
+            if (temp.isPassable() && !(temp instanceof Player)) {
+                maze[cheeseRow][cheeseCol] = new Cheese(cheeseCol, cheeseRow);
+            }
+        }
+    }
+
+
+
+    // The following methods are for Client code to use:
+
+    /**
+     * This method is called when the player (user) moves onto a cheese block. They
+     * will call this method, and client programmer can fill out the code
+     */
+    public void userCollectedCheese() {}
+
+
+    /**
+     * This is when a player (user) move gets validated (no walls, or cheese). They
+     * will be moving to that tile. This function will do some code that notifies the
+     * Client, which will in turn do the necessary work and notify the server
+     */
+    public void notifyClientAboutUserMove() {}
 
 }

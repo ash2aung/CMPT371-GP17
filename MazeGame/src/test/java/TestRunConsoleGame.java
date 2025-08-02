@@ -7,7 +7,7 @@ public class TestRun {
         Scanner input = new Scanner(System.in);
         Maze maze = new Maze();
 
-//        maze.revealEntireMaze();
+        maze.revealEntireMaze();
 
         while (true) {
 //            System.out.print("Id: ");
