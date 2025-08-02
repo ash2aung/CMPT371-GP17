@@ -31,8 +31,8 @@ public class TestRowsAndCols {
     }
 
     public static void main(String[] args) {
-        int numRow = 5;
-        int numCol = 10;
+        int numRow = 10;
+        int numCol = 20;
         MazeBuilder builder = new MazeBuilder(numRow, numCol);
         MazeObject[][] maze = builder.getMaze();
 

@@ -22,7 +22,7 @@ public class Maze {
 
         // Add players to board
         addPlayerToBoard(0, 1, 1);  // top left
-       addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
+        addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1);     // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
 
@@ -153,7 +153,7 @@ public class Maze {
             if (obj instanceof Player) {
                 System.out.print(obj + " ");
             } else if (obj instanceof Cheese) {
-                System.out.print("O ");
+                System.out.print("X ");
             } else if (!obj.isPassable()) {
                 System.out.print("# ");
             } else {
@@ -170,6 +170,19 @@ public class Maze {
         }
         printMaze();
     }
+
+    // debug space
+    public void findCheese() {
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                MazeObject temp = maze[row][col];
+                if (temp instanceof Cheese) {
+                    System.out.println("FOUND CHEESE AT " + row + ", " + col);
+                }
+            }
+        }
+    }
+
 
     // The following code is for the server to use:
 
@@ -192,10 +205,11 @@ public class Maze {
             // If not a wall or a player, place cheese there
             if (temp.isPassable() && !(temp instanceof Player)) {
                 maze[cheeseRow][cheeseCol] = new Cheese(cheeseCol, cheeseRow);
+                System.out.println("Cheese at " + cheeseRow + ", " + cheeseCol);
+                break;
             }
         }
     }
-
 
 
     // The following methods are for Client code to use:
