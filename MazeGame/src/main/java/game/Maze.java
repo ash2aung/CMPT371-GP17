@@ -36,6 +36,24 @@ public class Maze {
         updateVisibilityAroundPlayer(players[playerId]);
     }
 
+    public Maze(boolean serverGiven) {
+        // Default constructor where the maze is populated via server
+
+        // Fill maze entirely with walls
+        this.maze = new MazeObject[NUM_OF_ROWS][NUM_OF_COLUMNS];
+        for (int i = 0; i < NUM_OF_ROWS; i++) {
+            for (int j = 0; j < NUM_OF_COLUMNS; j++) {
+                this.maze[i][j] = new MazeObject(false);
+            }
+        }
+
+        // Add players to board
+        addPlayerToBoard(0, 1, 1);  // top left
+        addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
+        addPlayerToBoard(2, NUM_OF_ROWS - 2, 1);     // bottom left
+        addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
+    }
+
 
     /**
      * Temporary function. May be replaced when Canvas comes in.
@@ -65,6 +83,30 @@ public class Maze {
         }
     }
 
+    // Used with client
+    public void moveWithUserInput(char key, Client client) {
+        Player user = players[userId];
+
+        int userRow = user.getRow();
+        int userCol = user.getCol();
+
+
+        switch (key) {
+            case 'w':
+                processPlayerMove(userId, userRow - 1, userCol, client);    // up
+                break;
+            case 'a':
+                processPlayerMove(userId, userRow, userCol - 1, client);    // left
+                break;
+            case 's':
+                processPlayerMove(userId, userRow + 1, userCol, client);    // down
+                break;
+            case 'd':
+                processPlayerMove(userId, userRow, userCol + 1, client);    // right
+                break;
+        }
+    }
+
     /**
      * This function validates and process each player move. If invalid, do nothing
      * If valid, then move the player accordingly (by calling the relevant functions)
@@ -81,6 +123,22 @@ public class Maze {
 
         } else {
             movePlayer(userId, row, col);
+        }
+    }
+
+    // Used with the client
+    public void processPlayerMove(int playerId, int row, int col, Client client) {
+        MazeObject temp = maze[row][col];
+        if (temp instanceof Cheese) {
+            cheeseFound(playerId, row, col);
+
+        } else if (!temp.isPassable()) {
+            // this is a wall, deal with it
+            System.out.println("Wall at " + row + ", " + col);
+
+        } else {
+            movePlayer(userId, row, col);
+            client.sendInputToServer(row, col);
         }
     }
 

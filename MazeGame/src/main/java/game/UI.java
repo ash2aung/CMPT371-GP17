@@ -18,12 +18,15 @@ public class UI extends Application {
     private Image imgWall;
     private Image imgFloor;
     private Image imgCheese;
+    private Client client;
 
     // Maze instance
     private Maze maze;
 
     @Override
     public void start(Stage primaryStage) {
+        maze = client.setupConnection();
+
         // Create the Maze object (generates the 2D array)
         maze = new Maze();
         maze.placeCheeseRandomly();
