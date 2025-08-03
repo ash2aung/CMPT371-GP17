@@ -3,13 +3,18 @@ package server;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 // Some basic setups for the server, will need to implement a lot of the server functions
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
     private static final int PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     private static final ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
+    private static final BlockingQueue moves = new LinkedBlockingQueue<>(); // Global queue used for handling player
+                                                                            // moves. Each client thread validate moves
+                                                                            // then queues to this queue.
     private static int nextPlayerId = 1; // Starts at 1 by default, we can randomize it but I don't think it's necessary
 
     public static void main(String args[]) throws IOException {
