@@ -8,6 +8,7 @@ public class Client {
     private static final int SERVER_PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     // TODO: What's happening with this? Send during first connection?
+    // Khanh: after establishing connection, the client sends the VALID_AUTH string, in my test client I have it send "me key mause\n", using "\n" signal the end of the auth, but shouldn't be necessary
     private static final String SERVER_IP = "127.0.0.1";
     // TODO: Change me to the actual server ip
     private static OutputStream os = 0;
