@@ -8,7 +8,7 @@ public class Client {
     private static final int SERVER_PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     // TODO: What's happening with this? Send during first connection?
-    // Khanh: after establishing connection, the client sends the VALID_AUTH string, in my test client I have it send "me key mause\n", using "\n" signal the end of the auth, but shouldn't be necessary
+    // Khanh: after establishing connection, the client immediately sends the VALID_AUTH string
     private static final String SERVER_IP = "44.252.10.0"; //AWS VPS Pulic IP
     private static OutputStream os = 0;
     private static final int sendMovePacketSize = 2;
