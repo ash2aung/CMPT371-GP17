@@ -34,14 +34,18 @@ public class Server {
         }
     }
 
+    // Handles a new client connection
     private static void handleClient(Socket clientSocket) {
         try (BufferedReader inReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 InputStream in = clientSocket.getInputStream();
                 OutputStream out = clientSocket.getOutputStream()) {
             // Read and validate auth string
-            String auth = inReader.readLine();
+            char[] authBuffer = new char[VALID_AUTH.length()];
+            inReader.read(authBuffer, 0, VALID_AUTH.length());
+
             // Check length first in case somebody spamming or something, idk
-            if (auth.length() != VALID_AUTH.length() || !auth.equals(VALID_AUTH)) {
+            // TODO: double check for valid socket closing andclosing other things
+            if (!isValidAuth(authBuffer)) {
                 System.out.println(clientSocket.getInetAddress() + " Client rejected, auth: " + auth);
                 clientSocket.close();
                 return;
@@ -61,6 +65,16 @@ public class Server {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // Helper function used only in handleClient()
+    private static boolean isValidAuth(char[] auth) {
+        for (int i = 0; i < VALID_AUTH.length(); i++) {
+            if (auth[i] != VALID_AUTH.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static synchronized int getNextPlayerId() {
@@ -90,7 +104,11 @@ public class Server {
         }
 
         public void broadCastMove(int playerId, int row, int col) {
-            broadcast(playerId, row + "," + col);
+            try {
+                broadcast(playerId, row + "," + col);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         public void handleMessages() throws IOException {
