@@ -58,6 +58,11 @@ public class Server {
             }
         }
         System.out.println("4 players connected.");
+        synchronized (availablePlayerIds) {
+            if (availablePlayerIds.size() == 0) {
+                availablePlayerIds.notifyAll();
+            }
+        }
         // Start the game
         cheeseCoords = maze.placeCheeseRandomly();
         broadcastMazeToAllClients();
@@ -295,7 +300,7 @@ public class Server {
             if (temp < 0 || temp > 3) {
                 throw new IllegalStateException("Invalid player id generated: " + temp);
             }
-            if (availablePlayerIds.isEmpty()) {
+            if (availablePlayerIds.size() == 0) {
                 availablePlayerIds.notifyAll();
             }
             System.out.println("Available ids: " + availablePlayerIds);
