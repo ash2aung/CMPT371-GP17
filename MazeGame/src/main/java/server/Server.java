@@ -47,7 +47,7 @@ public class Server {
 
     private static void launchMatch() {
         matchInit();
-        while (!availablePlayerIds.isEmpty()) {
+        while (availablePlayerIds.size() != 0) {
             try {
                 System.out.println("Waiting for more connection");
                 Socket clientSocket = serverSocket.accept();
@@ -65,6 +65,7 @@ public class Server {
         }
         // Start the game
         cheeseCoords = maze.placeCheeseRandomly();
+        System.out.println("Cheese coords: " + cheeseCoords);
         broadcastMazeToAllClients();
     }
 
@@ -245,7 +246,8 @@ public class Server {
         public void handleMessages() throws Exception {
             // placeholder
             while (true) {
-                Thread.sleep(100000000);
+                Thread.sleep(1000);
+                System.out.println(playerId + " slept");
             }
         }
 
