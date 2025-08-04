@@ -143,6 +143,7 @@ public class Server {
         MazeObject[][] mazeGrid = maze.getMaze();
 
         // Process each tile in the maze
+        System.out.println("Processing maze");
         for (int i = 0; i < MAZE_SIZE; i++) {
             int row = i / 32;
             int col = i % 32;
@@ -203,7 +204,9 @@ public class Server {
     }
 
     private static void broadcastMazeToAllClients() {
+        System.out.println("started broadcastMazeToAllClients()");
         for (ClientHandler client : clients.values()) {
+            System.out.println("Sending maze to client: " + client.getId());
             try {
                 sendMazeToClient(client);
             } catch (Exception e) {
