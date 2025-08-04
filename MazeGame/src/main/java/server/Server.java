@@ -12,14 +12,14 @@ public class Server {
     private static final int PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     private static final ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
-    private static final BlockingQueue moves = new LinkedBlockingQueue<>(); // Global queue used for handling player
-                                                                            // moves. Each client thread validate moves
-                                                                            // then queues to this queue.
+    private static final BlockingQueue<Move> moves = new LinkedBlockingQueue<>(); // Global queue used for handling
+                                                                                  // player
+    // moves. Each client thread validate moves
+    // then queues to this queue.
     private static int nextPlayerId = 1; // Starts at 1 by default, we can randomize it but I don't think it's necessary
 
     public static void main(String args[]) throws IOException {
-        InetAddress bindAddr = InetAddress.getByName("0.0.0.0");
-        try (ServerSocket serverSocket = new ServerSocket(PORT, 50, bindAddr);) {
+        try (ServerSocket serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));) {
             System.out.println("Server started on port: " + PORT);
 
             while (true) {
@@ -33,10 +33,11 @@ public class Server {
     }
 
     private static void handleClient(Socket clientSocket) {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        try (BufferedReader inReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                InputStream in = clientSocket.getInputStream();
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
             // Read and validate auth string
-            String auth = in.readLine();
+            String auth = inReader.readLine();
             // Check length first in case somebody spamming or something, idk
             if (auth.length() != VALID_AUTH.length() || !auth.equals(VALID_AUTH)) {
                 System.out.println(clientSocket.getInetAddress() + " Client rejected, auth: " + auth);
@@ -76,10 +77,10 @@ public class Server {
     static class ClientHandler {
         private final int playerId;
         private final Socket socket;
-        private final BufferedReader in;
+        private final InputStream in;
         private final PrintWriter out;
 
-        public ClientHandler(int playerId, Socket socket, BufferedReader in, PrintWriter out) {
+        public ClientHandler(int playerId, Socket socket, InputStream in, PrintWriter out) {
             this.playerId = playerId;
             this.socket = socket;
             this.in = in;
