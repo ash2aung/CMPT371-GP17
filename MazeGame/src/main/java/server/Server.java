@@ -47,6 +47,11 @@ public class Server {
 
     private static void launchMatch() {
         matchInit();
+        try {
+            serverSocket.setSoTimeout(1000); // 1 second timeout
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
         while (availablePlayerIds.size() != 0) {
             try {
                 System.out.println("Waiting for more connection");
