@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 // Some basic setups for the server, will need to implement a lot of the server functions
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -22,10 +21,8 @@ public class Server {
     // Global queue used for handling player moves. Each client thread validate
     // moves then queues to this queue.
     private static int nextPlayerId; // Starts at 1 by default, we can randomize it but I don't think it's necessary
-    private static final int MAX_PLAYERS = 4;
-    private static CountDownLatch latch;
     private static int[] cheeseCoords = new int[2];
-    private static final int[] PIDS = { 0, 1, 2, 3 };
+    private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids
     private static List<Integer> availablePlayerIds;
     private static Maze maze;
 
@@ -44,12 +41,16 @@ public class Server {
         }
     }
 
-    private static void launchMatch() throws Exception {
+    private static void launchMatch() {
         matchInit();
-        while (availablePlayerIds.size() > 0) {
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
-            new Thread(() -> handleClient(clientSocket)).start();
+        while (!availablePlayerIds.isEmpty()) {
+            try {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
+                new Thread(() -> handleClient(clientSocket)).start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         System.out.println("4 players connected.");
         // Start the game
@@ -66,8 +67,6 @@ public class Server {
         cheeseCoords[1] = -1;
         // Reset player id
         nextPlayerId = 0;
-        // Reset countdown for waiting for 4 players
-        latch = new CountDownLatch(MAX_PLAYERS);
     }
 
     // Handles a new client connection
@@ -81,7 +80,7 @@ public class Server {
             inReader.read(authBuffer, 0, VALID_AUTH.length());
 
             // Check length first in case somebody spamming or something, idk
-            // TODO: double check for valid socket closing andclosing other things
+            // TODO: double check for valid socket closing and closing other things
             if (!isValidAuth(authBuffer)) {
                 System.out.println(clientSocket.getInetAddress() + " Client rejected, auth: " + new String(authBuffer));
                 clientSocket.close();
@@ -100,8 +99,7 @@ public class Server {
 
             // Afterall initial setups done, wait for all 4 players to join before starting
             // the game
-            latch.countDown();
-            latch.await();
+            waitUntilNoAvailableIds();
 
             clientHandler.handleMessages();
         } catch (Exception e) {
@@ -125,35 +123,6 @@ public class Server {
             }
         }
         return true;
-    }
-
-    // Used for when a player disconnects before all 4 player joins
-    // Returns a player id to the list of available ones
-    private static synchronized void addPlayerId(int id) throws Exception {
-        if (availablePlayerIds == null) {
-            throw new IllegalStateException("Null list of available player ids");
-        }
-        boolean idAlreadyInList = availablePlayerIds.indexOf(id) != -1;
-        if (idAlreadyInList) {
-            throw new IllegalStateException("Player id to be added is already in the list");
-        }
-        availablePlayerIds.add(id);
-    }
-
-    // Thread-safe function for getting next player id
-    private static synchronized int getNextPlayerId() throws IllegalStateException {
-        if (availablePlayerIds == null) {
-            throw new IllegalStateException("Null list of available player ids");
-        }
-        if (availablePlayerIds.size() == 0) {
-            throw new IllegalStateException("No player Id available");
-        }
-        Integer temp = availablePlayerIds.remove(0);
-        if (temp < 0 || temp > 3) {
-            throw new IllegalStateException("Invalid player id generated: " + temp);
-        }
-
-        return temp;
     }
 
     static class ClientHandler {
@@ -190,5 +159,46 @@ public class Server {
                 client.out.write(message.getBytes(StandardCharsets.UTF_8));
             }
         }
+    }
+
+    // FUNCTIONS FOR HANDLING PLAYER IDS
+    // Function for threads (connected players) to wait until the list is empty
+    public static void waitUntilNoAvailableIds() throws InterruptedException {
+        synchronized (availablePlayerIds) {
+            while (!availablePlayerIds.isEmpty()) {
+                availablePlayerIds.wait(); // Wait until notified and list is empty
+            }
+        }
+    }
+
+    // Used for when a player disconnects before all 4 player joins
+    // Returns a player id to the list of available ones
+    private static synchronized void addPlayerId(int id) throws Exception {
+        if (availablePlayerIds == null) {
+            throw new IllegalStateException("Null list of available player ids");
+        }
+        boolean idAlreadyInList = availablePlayerIds.indexOf(id) != -1;
+        if (idAlreadyInList) {
+            throw new IllegalStateException("Player id to be added is already in the list");
+        }
+        availablePlayerIds.add(id);
+    }
+
+    // Thread-safe function for getting next player id
+    private static synchronized int getNextPlayerId() throws IllegalStateException {
+        if (availablePlayerIds == null) {
+            throw new IllegalStateException("Null list of available player ids");
+        }
+        if (availablePlayerIds.size() == 0) {
+            throw new IllegalStateException("No player Id available");
+        }
+        Integer temp = availablePlayerIds.remove(0);
+        if (temp < 0 || temp > 3) {
+            throw new IllegalStateException("Invalid player id generated: " + temp);
+        }
+        if (availablePlayerIds.isEmpty()) {
+            availablePlayerIds.notifyAll();
+        }
+        return temp;
     }
 }
