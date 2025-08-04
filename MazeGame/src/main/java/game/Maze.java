@@ -4,8 +4,8 @@ package game;
 import java.util.Random;
 
 public class Maze {
-    final static int NUM_OF_COLUMNS = 10;
-    final static int NUM_OF_ROWS = 15;
+    final static int NUM_OF_COLUMNS = 32;
+    final static int NUM_OF_ROWS = 32;
 
     private MazeObject[][] maze;
     private Player[] players = new Player[4];

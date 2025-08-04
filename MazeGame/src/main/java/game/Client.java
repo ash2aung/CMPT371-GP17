@@ -7,20 +7,18 @@ public class Client {
     private static final int SERVER_PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     // TODO: What's happening with this? Send during first connection?
-    private static final String SERVER_IP = "44.252.10.0"; //AWS VPS IP
-    
+    private static final String SERVER_IP = "44.252.10.0"; // AWS VPS IP
+
     private static OutputStream os;
     private static InputStream is;
     private static PrintWriter out;
-    
+
     private static final int sendMovePacketSize = 3;
-    private static final int receiveMazePacketSize = 32*32*4/8;
+    private static final int receiveMazePacketSize = 32 * 32 * 4 / 8;
     private static final int receiveOtherPacketSize = 4;
     private static int userID = -1;
 
-    private static final int MAZE_SIZE = 32*32;
-    
-
+    private static final int MAZE_SIZE = 32 * 32;
 
     private byte[] buildPacket(int row, int col) {
         byte[] packet = new byte[sendMovePacketSize];
@@ -46,7 +44,7 @@ public class Client {
 
     private boolean processOtherServerPacket(byte[] input) {
         int token = (input[0] >> 5) & 0b00000111;
-        switch(token) {
+        switch (token) {
             case 0b001: {
                 // Start: Display maze
                 break;
@@ -56,7 +54,8 @@ public class Client {
                 int playerID = ((input[0] >> 3) & 0b00000011);
                 int newRow = ((input[0] & 0b00000111) << 2) | ((input[1] >> 6) & 0b00000011);
                 int newCol = ((input[1] >> 1) & 0b00011111);
-                // moveUserFromID(playerID, newRow, newCol);    CHECK IF ID = USER && THEY HAVEN'T MOVED => server accepts their move
+                // moveUserFromID(playerID, newRow, newCol); CHECK IF ID = USER && THEY HAVEN'T
+                // MOVED => server accepts their move
                 // updateVisibilityAroundPlayer();
                 // TODO: Talk to jack about updateVidibility being private and how to call it
                 break;
@@ -68,7 +67,8 @@ public class Client {
                 int newPlayerCol = ((input[1] >> 1) & 0b00011111);
                 int newCheeseRow = ((input[1] & 0b00000001) << 4) | ((input[2] >> 4) & 0b00001111);
                 int newCheeseCol = ((input[2] & 0b00001111) << 1) | ((input[3] >> 7) & 0b00000001);
-                // moveUserFromID(playerID, newPlayerRow, newPlayerCol); CHECK IF ID = USER && THEY HAVEN'T MOVED => server accepts their move
+                // moveUserFromID(playerID, newPlayerRow, newPlayerCol); CHECK IF ID = USER &&
+                // THEY HAVEN'T MOVED => server accepts their move
                 // updateVisibilityAroundPlayer();
                 // placeNewCheese(newCheeseRow, newCheeseCol);
                 break;
@@ -79,7 +79,8 @@ public class Client {
                 // displayGameOverScreen(playerID);
                 return false;
             }
-            default: System.out.println("ISSUE WITH INTERPRETING OTHER PACKET FROM SERVER'S TOKEN\n");
+            default:
+                System.out.println("ISSUE WITH INTERPRETING OTHER PACKET FROM SERVER'S TOKEN\n");
         }
 
         return true;
@@ -92,14 +93,14 @@ public class Client {
                 boolean continueLoop = true;
                 while (continueLoop) {
                     int bytesRead = 0;
-                    
+
                     while (bytesRead < receiveOtherPacketSize) {
                         int result = is.read(input, bytesRead, receiveOtherPacketSize - bytesRead);
                         if (result == -1) {
                             System.out.println("Issue reading other packets from server");
                             return;
                         }
-                        bytesRead+= result;
+                        bytesRead += result;
                     }
 
                     continueLoop = processOtherServerPacket(input);
@@ -117,6 +118,7 @@ public class Client {
     private static void sendInitToServer() {
         // Send auth to server proving
         out.write(VALID_AUTH);
+        out.flush();
         // Get back the player ID
         try {
             byte[] userid = new byte[1];
@@ -142,7 +144,8 @@ public class Client {
                 serverReadException.printStackTrace();
                 return null;
             }
-            if (bytesRead == -1) throw new IOException("Stream closed early\n");
+            if (bytesRead == -1)
+                throw new IOException("Stream closed early\n");
         }
 
         return mazeDescription;
@@ -164,7 +167,7 @@ public class Client {
             int row = i / 16;
             int col = i % 16;
 
-            switch((int) tileDescription) {
+            switch ((int) tileDescription) {
                 case 0b0000: {
                     // Wall: Initially filled with all walls so do nothing
                     break;
@@ -196,26 +199,29 @@ public class Client {
                 }
                 case 0b0110: {
                     // Cheese
-                    maze.getMaze()[row][col] = new Cheese(row, col); // TODO: Currently overriding decorations on this tile
+                    maze.getMaze()[row][col] = new Cheese(row, col); // TODO: Currently overriding decorations on this
+                                                                     // tile
                     break;
                 }
                 case 0b0111: // Player 1
                 case 0b1000: // Player 2
                 case 0b1001: // Player 3
-                case 0b1010: break; // Player 4
-                default: System.out.println("ERROR IN DECRYPTING SERVER'S PACKET\n");
+                case 0b1010:
+                    break; // Player 4
+                default:
+                    System.out.println("ERROR IN DECRYPTING SERVER'S PACKET\n");
             }
         }
         return maze;
     }
 
-    private void closeConnections() throws IOException{
+    private void closeConnections() throws IOException {
         os.close();
         out.close();
         is.close();
     }
 
-    private Maze setupConnection() throws IOException {
+    public Maze setupConnection() throws IOException {
         Socket socket = null;
         try {
             // Set up I/O streams
@@ -231,6 +237,7 @@ public class Client {
             return null;
         }
 
+        System.out.println("Connected to server.");
         // Send setup msg
         sendInitToServer();
 

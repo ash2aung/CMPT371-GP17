@@ -18,14 +18,18 @@ public class UI extends Application {
     private Image imgWall;
     private Image imgFloor;
     private Image imgCheese;
-    private Client client;
+    private Client client = new Client();
 
     // Maze instance
     private Maze maze;
 
     @Override
     public void start(Stage primaryStage) {
-        maze = client.setupConnection();
+        try {
+            maze = client.setupConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Create the Maze object (generates the 2D array)
         maze = new Maze();
@@ -33,8 +37,8 @@ public class UI extends Application {
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = new Image(getClass().getResourceAsStream("/game/player_placeholder.png"));
-        imgWall   = new Image(getClass().getResourceAsStream("/game/wall_placeholder.png"));
-        imgFloor  = new Image(getClass().getResourceAsStream("/game/floor_placeholder.png"));
+        imgWall = new Image(getClass().getResourceAsStream("/game/wall_placeholder.png"));
+        imgFloor = new Image(getClass().getResourceAsStream("/game/floor_placeholder.png"));
         imgCheese = new Image(getClass().getResourceAsStream("/game/cheese_placeholder.png"));
 
         // Get maze size from Maze class
@@ -70,8 +74,6 @@ public class UI extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Maze Game");
         primaryStage.show();
-
-
 
     }
 
