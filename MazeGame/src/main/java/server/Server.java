@@ -35,16 +35,13 @@ public class Server {
     }
 
     private static void launchServer() {
-        int numOfClient = 0;
-
         try (ServerSocket serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));) {
             System.out.println("Server started on port: " + PORT);
 
-            while (numOfClient < MAX_PLAYERS) {
+            while (latch.getCount() > 0) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
-                numOfClient++;
             }
             System.out.println("4 players connected.");
             // Start the game
