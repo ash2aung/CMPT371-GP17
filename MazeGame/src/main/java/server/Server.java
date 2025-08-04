@@ -186,6 +186,7 @@ public class Server {
         // Send the maze packet to the client
         client.out.write(mazePacket);
         client.out.flush();
+        System.out.println("Sent maze to client id: " + client.getId());
     }
 
     // Encodes the tile into 4-bit
@@ -235,6 +236,10 @@ public class Server {
 
         public void handleMessages() throws IOException {
             // placeholder
+        }
+
+        public int getId() {
+            return playerId;
         }
     }
 
