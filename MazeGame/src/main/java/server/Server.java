@@ -1,8 +1,9 @@
 package server;
 
+import game.PlayerMove;
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 // Some basic setups for the server, will need to implement a lot of the server functions
@@ -12,8 +13,9 @@ public class Server {
     private static final int PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     private static final ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
-    private static final BlockingQueue<Move> moves = new LinkedBlockingQueue<>(); // Global queue used for handling
-                                                                                  // player
+    private static final BlockingQueue<PlayerMove> moves = new LinkedBlockingQueue<>(); // Global queue used for
+                                                                                        // andling
+    // player
     // moves. Each client thread validate moves
     // then queues to this queue.
     private static int nextPlayerId = 1; // Starts at 1 by default, we can randomize it but I don't think it's necessary
@@ -35,7 +37,7 @@ public class Server {
     private static void handleClient(Socket clientSocket) {
         try (BufferedReader inReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 InputStream in = clientSocket.getInputStream();
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+                OutputStream out = clientSocket.getOutputStream()) {
             // Read and validate auth string
             String auth = inReader.readLine();
             // Check length first in case somebody spamming or something, idk
@@ -49,7 +51,7 @@ public class Server {
             int playerId = getNextPlayerId();
 
             System.out.println("Assigned user Id: " + playerId);
-            out.println(playerId);
+            out.write(playerId);
 
             // Add to clients list
             ClientHandler clientHandler = new ClientHandler(playerId, clientSocket, in, out);
@@ -65,7 +67,7 @@ public class Server {
         int temp = nextPlayerId;
 
         // In the unlikely case of overflow, wrap it back
-        if (temp == Integer.MAX_VALUE) {
+        if (temp == Byte.MAX_VALUE) {
             nextPlayerId = 1;
         } else {
             nextPlayerId++;
@@ -78,9 +80,9 @@ public class Server {
         private final int playerId;
         private final Socket socket;
         private final InputStream in;
-        private final PrintWriter out;
+        private final OutputStream out;
 
-        public ClientHandler(int playerId, Socket socket, InputStream in, PrintWriter out) {
+        public ClientHandler(int playerId, Socket socket, InputStream in, OutputStream out) {
             this.playerId = playerId;
             this.socket = socket;
             this.in = in;
@@ -96,13 +98,12 @@ public class Server {
         }
     }
 
-    // Right now I think it is sending the playerId as a String, maybe we can look
-    // into sending numbers directly instead of Strings
-    private static void broadcast(int sourcePlayerId, String message) {
+    // TODO: change this
+    private static void broadcast(int sourcePlayerId, String message) throws IOException {
         for (ClientHandler client : clients.values()) {
             // Do not send to the user who sent the original message
             if (client.playerId != sourcePlayerId) {
-                client.out.println("id:" + sourcePlayerId + "/" + message);
+                client.out.write(message.getBytes(StandardCharsets.UTF_8));
             }
         }
     }
