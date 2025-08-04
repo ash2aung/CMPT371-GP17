@@ -7,8 +7,7 @@ public class Client {
     private static final int SERVER_PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     // TODO: What's happening with this? Send during first connection?
-    private static final String SERVER_IP = "127.0.0.1";
-    // TODO: Change me to the actual server ip
+    private static final String SERVER_IP = "44.252.10.0"; //AWS VPS IP
     
     private static OutputStream os;
     private static InputStream is;
