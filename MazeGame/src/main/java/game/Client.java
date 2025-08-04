@@ -255,6 +255,8 @@ public class Client {
 
         // Process Maze
         Maze maze = createMaze(mazeDescription);
+        System.out.println("Created maze from description from Server");
+        maze.printMaze();
 
         Thread sendThread = new Thread(serverReceive(socket));
         sendThread.start();

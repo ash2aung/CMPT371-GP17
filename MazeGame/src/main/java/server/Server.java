@@ -1,7 +1,11 @@
 package server;
 
 import game.PlayerMove;
+import game.Cheese;
 import game.Maze;
+import game.MazeObject;
+import game.Player;
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -54,6 +58,7 @@ public class Server {
         }
         System.out.println("4 players connected.");
         // Start the game
+        broadcastMazeToAllClients();
     }
 
     // Sets states to starting defaults
@@ -123,6 +128,83 @@ public class Server {
             }
         }
         return true;
+    }
+
+    private static void sendMazeToClient(ClientHandler client) throws Exception {
+        final int MAZE_SIZE = 32 * 32;
+        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; // 512 bytes
+        byte[] mazePacket = new byte[PACKET_SIZE];
+
+        MazeObject[][] mazeGrid = maze.getMaze();
+
+        // Process each tile in the maze
+        for (int i = 0; i < MAZE_SIZE; i++) {
+            int row = i / 32;
+            int col = i % 32;
+
+            // Get the maze object at this position
+            MazeObject obj = mazeGrid[row][col];
+
+            // Encode the tile based on its type
+            byte tileEncoding = encodeTile(obj);
+
+            // Pack two tiles into each byte
+            int byteIndex = i / 2;
+            if (i % 2 == 0) {
+                // First tile goes in the upper 4 bits
+                mazePacket[byteIndex] = (byte) ((tileEncoding << 4) & 0b11110000);
+            } else {
+                // Second tile goes in the lower 4 bits
+                mazePacket[byteIndex] |= (byte) (tileEncoding & 0b00001111);
+            }
+        }
+
+        if (cheeseCoords[0] >= 0 && cheeseCoords[1] >= 0) {
+            int cheeseR = cheeseCoords[0];
+            int cheeseC = cheeseCoords[1];
+            int tileIndex = (cheeseR * 32) + cheeseC; // Tile index (0-1023)
+            int byteIndex = tileIndex / 2; // Byte index (0-511)
+
+            byte temp = mazePacket[byteIndex]; // Get existing byte
+
+            if (tileIndex % 2 == 0) {
+                // Cheese in upper 4 bits, preserve lower 4 bits
+                mazePacket[byteIndex] = (byte) ((0b0110 << 4) | (temp & 0b00001111));
+            } else {
+                // Cheese in lower 4 bits, preserve upper 4 bits
+                mazePacket[byteIndex] = (byte) ((temp & 0b11110000) | 0b0110);
+            }
+        } else {
+            throw new IllegalStateException("No cheese");
+        }
+
+        // Send the maze packet to the client
+        client.out.write(mazePacket);
+        client.out.flush();
+    }
+
+    // Encodes the tile into 4-bit
+    private static byte encodeTile(MazeObject obj) {
+        if (!obj.isPassable()) {
+            return (byte) 0b0000; // Wall
+        } else if (obj instanceof Player) {
+            Player player = (Player) obj;
+            int playerId = player.getId();
+            return (byte) (0b0111 + playerId); // 0b0111 for player 0, 0b1000 for player 1, etc.
+        } else {
+            return (byte) 0b0001; // Floor
+        }
+    }
+
+    private static void broadcastMazeToAllClients() {
+        for (ClientHandler client : clients.values()) {
+            try {
+                sendMazeToClient(client);
+            } catch (Exception e) {
+                System.err.println("Failed to send maze to client " + client.playerId);
+                e.printStackTrace();
+            }
+        }
     }
 
     static class ClientHandler {
