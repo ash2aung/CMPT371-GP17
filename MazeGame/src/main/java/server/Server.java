@@ -5,6 +5,8 @@ import game.Maze;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -13,6 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
     private static final int PORT = 42042; // Random number, can be changed if needed
+    private static ServerSocket serverSocket;
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
     private static final ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
     private static final BlockingQueue<PlayerMove> moves = new LinkedBlockingQueue<>();
@@ -21,37 +24,55 @@ public class Server {
     private static int nextPlayerId; // Starts at 1 by default, we can randomize it but I don't think it's necessary
     private static final int MAX_PLAYERS = 4;
     private static CountDownLatch latch;
-
+    private static int[] cheeseCoords = new int[2];
+    private static final int[] PIDS = { 0, 1, 2, 3 };
+    private static List<Integer> availablePlayerIds;
     private static Maze maze;
 
     public static void main(String args[]) throws IOException {
-        while (true) {
-            maze = new Maze();
-            maze.placeCheeseRandomly();
-            nextPlayerId = 0;
-            latch = new CountDownLatch(MAX_PLAYERS);
-            launchServer();
-        }
-    }
-
-    private static void launchServer() {
-        try (ServerSocket serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));) {
+        try {
+            serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
             System.out.println("Server started on port: " + PORT);
 
-            while (latch.getCount() > 0) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
-                new Thread(() -> handleClient(clientSocket)).start();
+            while (true) {
+                launchMatch();
+                // Once a match ends, relaunch match with reset state
             }
-            System.out.println("4 players connected.");
-            // Start the game
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private static void launchMatch() throws Exception {
+        matchInit();
+        while (availablePlayerIds.size() > 0) {
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
+            new Thread(() -> handleClient(clientSocket)).start();
+        }
+        System.out.println("4 players connected.");
+        // Start the game
+    }
+
+    // Sets states to starting defaults
+    private static void matchInit() {
+        // Create new random maze
+        maze = new Maze();
+        // Reset available player Ids
+        availablePlayerIds = Arrays.stream(PIDS).boxed().toList();
+        // Cheese removed
+        cheeseCoords[0] = -1;
+        cheeseCoords[1] = -1;
+        // Reset player id
+        nextPlayerId = 0;
+        // Reset countdown for waiting for 4 players
+        latch = new CountDownLatch(MAX_PLAYERS);
+    }
+
     // Handles a new client connection
     private static void handleClient(Socket clientSocket) {
+        int playerId = -1;
         try (BufferedReader inReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 InputStream in = clientSocket.getInputStream();
                 OutputStream out = clientSocket.getOutputStream()) {
@@ -68,7 +89,7 @@ public class Server {
             }
 
             // Assign player ID and send to the client
-            int playerId = getNextPlayerId();
+            playerId = getNextPlayerId();
 
             System.out.println("Assigned player Id: " + playerId);
             out.write(playerId);
@@ -84,6 +105,14 @@ public class Server {
 
             clientHandler.handleMessages();
         } catch (Exception e) {
+            // Add the assigned player id back into the list of available ones
+            if (playerId != -1) {
+                try {
+                    addPlayerId(playerId);
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }
+            }
             e.printStackTrace();
         }
     }
@@ -98,14 +127,30 @@ public class Server {
         return true;
     }
 
-    private static synchronized int getNextPlayerId() {
-        int temp = nextPlayerId;
+    // Used for when a player disconnects before all 4 player joins
+    // Returns a player id to the list of available ones
+    private static synchronized void addPlayerId(int id) throws Exception {
+        if (availablePlayerIds == null) {
+            throw new IllegalStateException("Null list of available player ids");
+        }
+        boolean idAlreadyInList = availablePlayerIds.indexOf(id) != -1;
+        if (idAlreadyInList) {
+            throw new IllegalStateException("Player id to be added is already in the list");
+        }
+        availablePlayerIds.add(id);
+    }
 
-        // In the unlikely case of overflow, wrap it back
-        if (temp == Byte.MAX_VALUE) {
-            nextPlayerId = 0;
-        } else {
-            nextPlayerId++;
+    // Thread-safe function for getting next player id
+    private static synchronized int getNextPlayerId() throws IllegalStateException {
+        if (availablePlayerIds == null) {
+            throw new IllegalStateException("Null list of available player ids");
+        }
+        if (availablePlayerIds.size() == 0) {
+            throw new IllegalStateException("No player Id available");
+        }
+        Integer temp = availablePlayerIds.remove(0);
+        if (temp < 0 || temp > 3) {
+            throw new IllegalStateException("Invalid player id generated: " + temp);
         }
 
         return temp;
