@@ -98,6 +98,7 @@ public class Server {
 
             // Assign player ID and send to the client
             playerId = getNextPlayerId();
+            System.out.println("Available ids: " + availablePlayerIds);
 
             System.out.println("Assigned player Id: " + playerId);
             out.write(playerId);
