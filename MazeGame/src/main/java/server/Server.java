@@ -56,6 +56,7 @@ public class Server {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            System.out.println("list size = " + availablePlayerIds.size());
         }
         System.out.println("4 players connected.");
         synchronized (availablePlayerIds) {
