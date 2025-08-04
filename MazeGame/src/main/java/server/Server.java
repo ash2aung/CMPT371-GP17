@@ -297,6 +297,7 @@ public class Server {
             if (availablePlayerIds.isEmpty()) {
                 availablePlayerIds.notifyAll();
             }
+            System.out.println("Available ids: " + availablePlayerIds);
             return temp;
         }
     }
