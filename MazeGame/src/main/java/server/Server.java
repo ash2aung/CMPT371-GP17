@@ -45,7 +45,7 @@ public class Server {
         }
     }
 
-    private static void launchMatch() {
+    private static void launchMatch() throws Exception {
         matchInit();
         try {
             serverSocket.setSoTimeout(1000); // 1 second timeout
@@ -73,6 +73,10 @@ public class Server {
         cheeseCoords = maze.placeCheeseRandomly();
         System.out.println("Cheese coords: " + cheeseCoords);
         broadcastMazeToAllClients();
+        while (true) {
+            Thread.sleep(1000);
+            System.out.println("Main thread slept for 1 second");
+        }
     }
 
     // Sets states to starting defaults
