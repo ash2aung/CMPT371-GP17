@@ -59,6 +59,7 @@ public class Server {
         }
         System.out.println("4 players connected.");
         // Start the game
+        cheeseCoords = maze.placeCheeseRandomly();
         broadcastMazeToAllClients();
     }
 
