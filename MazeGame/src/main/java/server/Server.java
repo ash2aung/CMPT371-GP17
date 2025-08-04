@@ -25,7 +25,6 @@ public class Server {
     private static final BlockingQueue<PlayerMove> moves = new LinkedBlockingQueue<>();
     // Global queue used for handling player moves. Each client thread validate
     // moves then queues to this queue.
-    private static int nextPlayerId; // Starts at 1 by default, we can randomize it but I don't think it's necessary
     private static int[] cheeseCoords = new int[2];
     private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids
     private static List<Integer> availablePlayerIds;
@@ -50,6 +49,7 @@ public class Server {
         matchInit();
         while (!availablePlayerIds.isEmpty()) {
             try {
+                System.out.println("Waiting for more connection");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
@@ -72,11 +72,10 @@ public class Server {
         for (int i = 0; i < PIDS.length; i++) {
             availablePlayerIds.add(PIDS[i]);
         }
+        System.out.println("Init available ids: " + availablePlayerIds);
         // Cheese removed
         cheeseCoords[0] = -1;
         cheeseCoords[1] = -1;
-        // Reset player id
-        nextPlayerId = 0;
     }
 
     // Handles a new client connection
