@@ -271,20 +271,22 @@ public class Server {
     }
 
     // Thread-safe function for getting next player id
-    private static synchronized int getNextPlayerId() throws IllegalStateException {
+    private static int getNextPlayerId() throws IllegalStateException {
         if (availablePlayerIds == null) {
             throw new IllegalStateException("Null list of available player ids");
         }
-        if (availablePlayerIds.size() == 0) {
-            throw new IllegalStateException("No player Id available");
+        synchronized (availablePlayerIds) {
+            if (availablePlayerIds.size() == 0) {
+                throw new IllegalStateException("No player Id available");
+            }
+            Integer temp = availablePlayerIds.remove(0);
+            if (temp < 0 || temp > 3) {
+                throw new IllegalStateException("Invalid player id generated: " + temp);
+            }
+            if (availablePlayerIds.isEmpty()) {
+                availablePlayerIds.notifyAll();
+            }
+            return temp;
         }
-        Integer temp = availablePlayerIds.remove(0);
-        if (temp < 0 || temp > 3) {
-            throw new IllegalStateException("Invalid player id generated: " + temp);
-        }
-        if (availablePlayerIds.isEmpty()) {
-            availablePlayerIds.notifyAll();
-        }
-        return temp;
     }
 }
