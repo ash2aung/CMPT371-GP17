@@ -234,8 +234,11 @@ public class Server {
             }
         }
 
-        public void handleMessages() throws IOException {
+        public void handleMessages() throws Exception {
             // placeholder
+            while (true) {
+                Thread.sleep(100000000);
+            }
         }
 
         public int getId() {
