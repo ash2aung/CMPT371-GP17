@@ -9,6 +9,7 @@ import game.Player;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -66,7 +67,10 @@ public class Server {
         // Create new random maze
         maze = new Maze();
         // Reset available player Ids
-        availablePlayerIds = Arrays.stream(PIDS).boxed().toList();
+        availablePlayerIds = new ArrayList<Integer>();
+        for (int i = 0; i < PIDS.length; i++) {
+            availablePlayerIds.add(PIDS[i]);
+        }
         // Cheese removed
         cheeseCoords[0] = -1;
         cheeseCoords[1] = -1;

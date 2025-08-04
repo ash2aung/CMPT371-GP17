@@ -168,7 +168,7 @@ public class Maze {
         updatePlayerPosition(players[playerId], row, col);
         updateVisibilityAroundPlayer(players[playerId]);
         notifyClientAboutUserMove();
-        printMaze();
+        //printMaze();
     }
 
     /**
