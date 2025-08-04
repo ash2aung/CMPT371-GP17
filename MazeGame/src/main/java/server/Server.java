@@ -247,8 +247,7 @@ public class Server {
         public void handleMessages() throws Exception {
             // placeholder
             while (true) {
-                Thread.sleep(1000);
-                System.out.println(playerId + " slept");
+                in.read();
             }
         }
 
