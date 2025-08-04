@@ -46,7 +46,7 @@ public class Server {
             // Check length first in case somebody spamming or something, idk
             // TODO: double check for valid socket closing andclosing other things
             if (!isValidAuth(authBuffer)) {
-                System.out.println(clientSocket.getInetAddress() + " Client rejected, auth: " + auth);
+                System.out.println(clientSocket.getInetAddress() + " Client rejected, auth: " + new String(authBuffer));
                 clientSocket.close();
                 return;
             }
