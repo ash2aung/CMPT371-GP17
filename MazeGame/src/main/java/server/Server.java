@@ -48,21 +48,27 @@ public class Server {
     private static void launchMatch() throws Exception {
         matchInit();
         try {
-            serverSocket.setSoTimeout(1000); // 1 second timeout
+            serverSocket.setSoTimeout(2000); // 1 second timeout
         } catch (SocketException e) {
             e.printStackTrace();
         }
+
+        // Loop for accepting 4 client connections
         while (availablePlayerIds.size() != 0) {
             try {
                 System.out.println("Waiting for more connection");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
+            } catch (SocketTimeoutException e) {
+                // Do nothing
             } catch (Exception e) {
                 e.printStackTrace();
+                return; // early exit
             }
             System.out.println("list size = " + availablePlayerIds.size());
         }
+
         System.out.println("4 players connected.");
         synchronized (availablePlayerIds) {
             if (availablePlayerIds.size() == 0) {

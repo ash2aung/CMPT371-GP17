@@ -32,8 +32,8 @@ public class UI extends Application {
         }
 
         // Create the Maze object (generates the 2D array)
-        maze = new Maze();
-        maze.placeCheeseRandomly();
+        // maze = new Maze();
+        // maze.placeCheeseRandomly();
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = new Image(getClass().getResourceAsStream("/game/player_placeholder.png"));

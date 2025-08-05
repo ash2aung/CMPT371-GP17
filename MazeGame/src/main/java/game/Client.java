@@ -132,6 +132,7 @@ public class Client {
     }
 
     private static byte[] getMaze() throws IOException {
+        System.out.println("Getting maze from server");
         byte[] mazeDescription = new byte[receiveMazePacketSize];
         int totalbytesRead = 0;
 
@@ -144,8 +145,12 @@ public class Client {
                 serverReadException.printStackTrace();
                 return null;
             }
-            if (bytesRead == -1)
+            if (bytesRead == -1) {
                 throw new IOException("Stream closed early\n");
+            }
+            totalbytesRead += bytesRead;
+            System.out.println("Bytes read this iteration: " + bytesRead + ", Total: " + totalbytesRead + "/"
+                    + mazeDescription.length);
         }
 
         return mazeDescription;
@@ -164,8 +169,8 @@ public class Client {
             }
 
             // Set current coords
-            int row = i / 16;
-            int col = i % 16;
+            int row = i / 32;
+            int col = i % 32;
 
             switch ((int) tileDescription) {
                 case 0b0000: {
