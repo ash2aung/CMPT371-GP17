@@ -14,10 +14,6 @@ public class Maze {
     // It will be distributed by the server at the start of thegame
     private int userId = 0;
 
-    public Player[] getPlayers() {
-        return players;
-    }
-
     public Maze() {
         // Create board
         maze = new MazeBuilder(NUM_OF_ROWS, NUM_OF_COLUMNS).getMaze();
