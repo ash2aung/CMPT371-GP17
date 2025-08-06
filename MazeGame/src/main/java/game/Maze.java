@@ -6,7 +6,6 @@ public class Maze {
     final static int NUM_OF_COLUMNS = 20;
     final static int NUM_OF_ROWS = 20;
 
-
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
     private Cheese cheese;
@@ -28,7 +27,6 @@ public class Maze {
         addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1); // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
-
 
     }
 
@@ -131,10 +129,12 @@ public class Maze {
     }
 
     /**
-     * This method will take in a row and col, and check if that cell has another player
+     * This method will take in a row and col, and check if that cell has another
+     * player
+     * 
      * @param playerId The player we want to check for
-     * @param row Row number
-     * @param col Column number
+     * @param row      Row number
+     * @param col      Column number
      * @return True if collision, false otherwise
      */
     private boolean checkForPlayer(int playerId, int row, int col) {
@@ -156,6 +156,7 @@ public class Maze {
 
     private boolean checkForCheese(int row, int col) {
         return (row == cheese.getRow() && col == cheese.getCol());
+    }
 
     // Used with the client
     public void processPlayerMove(int playerId, int row, int col, Client client) {
@@ -230,7 +231,6 @@ public class Maze {
         players[playerId].setCol(col);
     }
 
-
     public void printMaze() {
         for (int row = 0; row < NUM_OF_ROWS; row++) {
             for (int col = 0; col < NUM_OF_COLUMNS; col++) {
@@ -245,7 +245,8 @@ public class Maze {
 
     public void printMazeObject(int row, int col) {
         MazeObject obj = maze[row][col];
-        // here, we use -1 because no playerId can be -1. SO this will check for ALL players
+        // here, we use -1 because no playerId can be -1. SO this will check for ALL
+        // players
         if (checkForPlayer(-1, row, col)) {
             System.out.print(getPlayerWithRowCol(row, col) + " ");
 
@@ -265,8 +266,10 @@ public class Maze {
     }
 
     /**
-     * Gets the player, given row and col. Use ONLY if player is confirmed to be in that position
+     * Gets the player, given row and col. Use ONLY if player is confirmed to be in
+     * that position
      * Otherwise, it'll break the code
+     * 
      * @param row
      * @param col
      * @return
@@ -291,7 +294,6 @@ public class Maze {
         }
         printMaze();
     }
-
 
     // getters
 
