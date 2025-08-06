@@ -54,11 +54,12 @@ public class UI extends Application {
         Scene scene = new Scene(root);
 
         scene.setOnKeyPressed(event -> {
+            // TODO: Only change since Monday is this now calls the functions that update the client
             switch (event.getCode()) {
-                case W -> maze.moveWithUserInput('w');
-                case A -> maze.moveWithUserInput('a');
-                case S -> maze.moveWithUserInput('s');
-                case D -> maze.moveWithUserInput('d');
+                case W -> maze.moveWithUserInput('w', client);
+                case A -> maze.moveWithUserInput('a', client);
+                case S -> maze.moveWithUserInput('s', client);
+                case D -> maze.moveWithUserInput('d', client);
                 default -> {
                     // ignore other keys
                 }
