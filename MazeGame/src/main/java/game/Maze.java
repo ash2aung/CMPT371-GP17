@@ -9,6 +9,7 @@ public class Maze {
 
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
+    private Cheese cheese;
 
 
     // This is the id of the game player/client/user. So this is you.
@@ -26,14 +27,12 @@ public class Maze {
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1);     // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
 
-        printMaze();
 
     }
 
     private void addPlayerToBoard(int playerId, int row, int col) {
         players[playerId] = new Player(playerId, col, row);
-        maze[row][col] = players[playerId];
-        updateVisibilityAroundPlayer(players[playerId]);
+        updateVisibilityAroundPlayer(playerId);
     }
 
 
@@ -72,7 +71,11 @@ public class Maze {
      */
     public void processPlayerMove(int playerId, int row, int col) {
         MazeObject temp = maze[row][col];
-        if (temp instanceof Cheese) {
+        if (checkForPlayer(playerId, row, col)) {
+            // this is a player, deal with it
+            System.out.println("Collision at " + row + ", " + col);
+
+        } else if (checkForCheese(row, col)) {
             cheeseFound(playerId, row, col);
 
         } else if (!temp.isPassable()) {
@@ -84,7 +87,37 @@ public class Maze {
         }
     }
 
+    /**
+     * This method will take in a row and col, and check if that cell has another player
+     * @param playerId The player we want to check for
+     * @param row Row number
+     * @param col Column number
+     * @return True if collision, false otherwise
+     */
+    private boolean checkForPlayer(int playerId, int row, int col) {
+
+        for (int i = 0; i < 4; i++) {
+            if (i == playerId) {
+                continue;
+            }
+            int otherPlayerRow = players[i].getRow();
+            int otherPlayerCol = players[i].getCol();
+
+            // check for collision
+            if (row == otherPlayerRow && col == otherPlayerCol) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkForCheese(int row, int col) {
+        return (row == cheese.getRow() && col == cheese.getCol());
+    }
+
     private void cheeseFound(int playerId, int row, int col) {
+        placeCheeseRandomly(); // temporary method for game testing. REMOVE IT AFTERWARDS
+
         if (playerId == userId) {
             notifyClientThatUserCollectedCheese();
 
@@ -101,7 +134,6 @@ public class Maze {
         System.out.println("Player " + playerId + " has "
                 + players[playerId].getCheeseCount() + " cheese.");
 
-
     }
 
     /**
@@ -110,9 +142,8 @@ public class Maze {
      * that only validated PlayerMoves are given.
      */
     private void movePlayer(int playerId, int row, int col) {
-//        updatePlayerPosition(players[playerId], col, row);
-        updatePlayerPosition(players[playerId], row, col);
-        updateVisibilityAroundPlayer(players[playerId]);
+        updatePlayerPosition(playerId, row, col);
+        updateVisibilityAroundPlayer(playerId);
         notifyClientAboutUserMove();
         printMaze();
     }
@@ -121,7 +152,8 @@ public class Maze {
     /**
      * Makes all directly adjacent squares visible to the player
      */
-    private void updateVisibilityAroundPlayer(Player p) {
+    private void updateVisibilityAroundPlayer(int playerId) {
+        Player p = players[playerId];
         int playerRow = p.getRow();
         int playerCol = p.getCol();
 
@@ -135,31 +167,24 @@ public class Maze {
         maze[playerRow + 1][playerCol + 1].setVisible(); // Bot right
     }
 
+
     /**
-     * When there's a valid player move, this function is called. It updates
-     * the position of player with playerId, and replaces the previous position
-     * with a blank space
-     * @param p The i
-     * @param col
+     * This method is called when a move is validated. It will move select player
+     * to target row and col
+     * @param playerId
      * @param row
+     * @param col
      */
-    private void updatePlayerPosition(Player p, int row, int col) {
-        maze[row][col] = p;
-
-        maze[p.getRow()][p.getCol()] = new MazeObject(true);
-
-        p.setRow(row);
-        p.setCol(col);
+    private void updatePlayerPosition(int playerId, int row, int col) {
+        players[playerId].setRow(row);
+        players[playerId].setCol(col);
     }
 
-    public MazeObject[][] getMaze() {
-        return maze;
-    }
 
     public void printMaze() {
         for (int row = 0; row < NUM_OF_ROWS; row++) {
             for (int col = 0; col < NUM_OF_COLUMNS; col++) {
-                printMazeObject(maze[row][col]);
+                printMazeObject(row, col);
             }
             System.out.println();
         }
@@ -168,20 +193,44 @@ public class Maze {
         System.out.println("You are at " + players[userId].getRow() + ", " + players[userId].getCol());
     }
 
-    public void printMazeObject(MazeObject obj) {
-        if (!obj.isVisible()) {
+    public void printMazeObject(int row, int col) {
+        MazeObject obj = maze[row][col];
+        // here, we use -1 because no playerId can be -1. SO this will check for ALL players
+        if (checkForPlayer(-1, row, col)) {
+            System.out.print(getPlayerWithRowCol(row, col) + " ");
+
+        } else if (checkForCheese(row, col)) {
+            System.out.print("X ");
+
+        } else if (!obj.isVisible()) {
             System.out.print(". ");
+
         } else {
-            if (obj instanceof Player) {
-                System.out.print(obj + " ");
-            } else if (obj instanceof Cheese) {
-                System.out.print("X ");
-            } else if (!obj.isPassable()) {
+            if (!obj.isPassable()) {
                 System.out.print("# ");
             } else {
                 System.out.print("  ");
             }
         }
+    }
+
+    /**
+     * Gets the player, given row and col. Use ONLY if player is confirmed to be in that position
+     * Otherwise, it'll break the code
+     * @param row
+     * @param col
+     * @return
+     */
+    private Player getPlayerWithRowCol(int row, int col) {
+        for (int i = 0; i < 4; i++) {
+            int playerRow = players[i].getRow();
+            int playerCol = players[i].getCol();
+
+            if (playerRow == row && playerCol == col) {
+                return players[i];
+            }
+        }
+        return null;
     }
 
     public void revealEntireMaze() {
@@ -191,6 +240,21 @@ public class Maze {
             }
         }
         printMaze();
+    }
+
+
+    // getters
+
+    public MazeObject[][] getMaze() {
+        return maze;
+    }
+
+    public Player[] getPlayers() {
+        return players;
+    }
+
+    public Cheese getCheese() {
+        return cheese;
     }
 
     // debug space
@@ -217,8 +281,8 @@ public class Maze {
 
             MazeObject temp = maze[cheeseRow][cheeseCol];
             // If not a wall or a player, place cheese there
-            if (temp.isPassable() && !(temp instanceof Player)) {
-                maze[cheeseRow][cheeseCol] = new Cheese(cheeseCol, cheeseRow);
+            if (temp.isPassable() && !checkForPlayer(-1, cheeseRow, cheeseCol)) {
+                cheese = new Cheese(cheeseCol, cheeseRow);
                 System.out.println("Cheese at " + cheeseRow + ", " + cheeseCol);
                 break;
             }
