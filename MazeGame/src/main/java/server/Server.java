@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
+    private static final int MAZESIZE = 20;
     private static final int MOVEPACKETSIZE = 3;
     private static final int PORT = 42042; // Random number, can be changed if needed
     private static ServerSocket serverSocket;
@@ -259,14 +260,14 @@ public class Server {
 
     // Processes the maze
     private static byte[] processMaze(MazeObject[][] mazeGrid) {
-        final int MAZE_SIZE = 32 * 32;
-        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; // 512 bytes
+        final int MAZE_SIZE = MAZESIZE * MAZESIZE;
+        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; // 
         byte[] mazePacket = new byte[PACKET_SIZE];
         // Process each tile in the maze
         System.out.println("Processing maze");
         for (int i = 0; i < MAZE_SIZE; i++) {
-            int row = i / 32;
-            int col = i % 32;
+            int row = i / MAZESIZE;
+            int col = i % MAZESIZE;
 
             // Get the maze object at this position
             MazeObject obj = mazeGrid[row][col];
@@ -288,7 +289,7 @@ public class Server {
         if (cheeseCoords[0] >= 0 && cheeseCoords[1] >= 0) {
             int cheeseR = cheeseCoords[0];
             int cheeseC = cheeseCoords[1];
-            int tileIndex = (cheeseR * 32) + cheeseC; // Tile index (0-1023)
+            int tileIndex = (cheeseR * MAZESIZE) + cheeseC; // Tile index (0-1023)
             int byteIndex = tileIndex / 2; // Byte index (0-511)
 
             byte temp = mazePacket[byteIndex]; // Get existing byte
