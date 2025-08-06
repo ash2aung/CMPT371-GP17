@@ -10,8 +10,12 @@ public class Maze {
     private Player[] players = new Player[4];
 
     // This is the id of the game player/client/user. So this is you.
-    // It will be distributed by the server at the start of the game
+    // It will be distributed by the server at the start of thegame
     private int userId = 0;
+
+    public Player[] getPlayers() {
+        return players;
+    }
 
     public Maze() {
         // Create board
@@ -168,7 +172,7 @@ public class Maze {
         updatePlayerPosition(players[playerId], row, col);
         updateVisibilityAroundPlayer(players[playerId]);
         notifyClientAboutUserMove();
-        //printMaze();
+        // printMaze();
     }
 
     /**
@@ -197,7 +201,7 @@ public class Maze {
      * @param col
      * @param row
      */
-    private void updatePlayerPosition(Player p, int row, int col) {
+    public void updatePlayerPosition(Player p, int row, int col) {
         maze[row][col] = p;
 
         maze[p.getRow()][p.getCol()] = new MazeObject(true);
@@ -255,8 +259,10 @@ public class Maze {
 
     /**
      * Right after generating a map, the server will also generate a cheese using
-     * this method. Then it will distribute the Map and other elements to all players
-     * Whenever a Cheese is verified to be eaten, the server will call this method again
+     * this method. Then it will distribute the Map and other elements to all
+     * players
+     * Whenever a Cheese is verified to be eaten, the server will call this method
+     * again
      * to replace a new cheese.
      */
     public int[] placeCheeseRandomly() {
