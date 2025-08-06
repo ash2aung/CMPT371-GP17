@@ -222,7 +222,7 @@ public class Server {
         winPacket[2] = 0;
         winPacket[3] = 0;
 
-        broadcastToAllClients(winPacket, -1); // Send to all players
+        broadcast(winPacket, -1); // Send to all players
     }
 
     private static void broadcast(byte[] packet, int excludePlayerId) {
