@@ -205,8 +205,9 @@ public class Client {
                 }
                 case 0b0110: {
                     // Cheese
-                    maze.getMaze()[row][col] = new Cheese(row, col); // TODO: Currently overriding decorations on this
-                                                                     // tile
+                    // TODO: Currently overriding decorations on this
+                    // tile
+                    maze.placeCheeseAt(row, col);
                     break;
                 }
                 case 0b0111: // Player 1

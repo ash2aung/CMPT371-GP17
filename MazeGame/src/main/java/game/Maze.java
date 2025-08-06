@@ -291,6 +291,10 @@ public class Maze {
         printMaze();
     }
 
+    public void placeCheeseAt(int row, int col) {
+        cheese = new Cheese(col, row);
+    }
+
     // getters
 
     public MazeObject[][] getMaze() {
