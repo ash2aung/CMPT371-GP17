@@ -1,30 +1,32 @@
 package game;
 
-
 import java.util.Random;
 
 public class Maze {
     final static int NUM_OF_COLUMNS = 20;
     final static int NUM_OF_ROWS = 20;
 
+
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
     private Cheese cheese;
 
-
     // This is the id of the game player/client/user. So this is you.
-    // It will be distributed  by the server at the start of the game
+    // It will be distributed by the server at the start of thegame
     private int userId = 0;
 
+    public Player[] getPlayers() {
+        return players;
+    }
 
-    public Maze () {
+    public Maze() {
         // Create board
         maze = new MazeBuilder(NUM_OF_ROWS, NUM_OF_COLUMNS).getMaze();
 
         // Add players to board
-        addPlayerToBoard(0, 1, 1);  // top left
+        addPlayerToBoard(0, 1, 1); // top left
         addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
-        addPlayerToBoard(2, NUM_OF_ROWS - 2, 1);     // bottom left
+        addPlayerToBoard(2, NUM_OF_ROWS - 2, 1); // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
 
 
@@ -35,10 +37,28 @@ public class Maze {
         updateVisibilityAroundPlayer(playerId);
     }
 
+    public Maze(boolean serverGiven) {
+        // Default constructor where the maze is populated via server
+
+        // Fill maze entirely with walls
+        this.maze = new MazeObject[NUM_OF_ROWS][NUM_OF_COLUMNS];
+        for (int i = 0; i < NUM_OF_ROWS; i++) {
+            for (int j = 0; j < NUM_OF_COLUMNS; j++) {
+                this.maze[i][j] = new MazeObject(false);
+            }
+        }
+
+        // Add players to board
+        addPlayerToBoard(0, 1, 1); // top left
+        addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
+        addPlayerToBoard(2, NUM_OF_ROWS - 2, 1); // bottom left
+        addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
+    }
 
     /**
      * Temporary function. May be replaced when Canvas comes in.
      * Need to deal with lower and upper cases later
+     * 
      * @param key It's the WASD key inputs
      */
     public void moveWithUserInput(char key) {
@@ -47,26 +67,49 @@ public class Maze {
         int userRow = user.getRow();
         int userCol = user.getCol();
 
+        switch (key) {
+            case 'w':
+                processPlayerMove(userId, userRow - 1, userCol); // up
+                break;
+            case 'a':
+                processPlayerMove(userId, userRow, userCol - 1); // left
+                break;
+            case 's':
+                processPlayerMove(userId, userRow + 1, userCol); // down
+                break;
+            case 'd':
+                processPlayerMove(userId, userRow, userCol + 1); // right
+                break;
+        }
+    }
+
+    // Used with client
+    public void moveWithUserInput(char key, Client client) {
+        Player user = players[userId];
+
+        int userRow = user.getRow();
+        int userCol = user.getCol();
 
         switch (key) {
             case 'w':
-                processPlayerMove(userId, userRow - 1, userCol);    // up
+                processPlayerMove(userId, userRow - 1, userCol, client); // up
                 break;
             case 'a':
-                processPlayerMove(userId, userRow, userCol - 1);    // left
+                processPlayerMove(userId, userRow, userCol - 1, client); // left
                 break;
             case 's':
-                processPlayerMove(userId, userRow + 1, userCol);    // down
+                processPlayerMove(userId, userRow + 1, userCol, client); // down
                 break;
             case 'd':
-                processPlayerMove(userId, userRow, userCol + 1);    // right
+                processPlayerMove(userId, userRow, userCol + 1, client); // right
                 break;
         }
     }
 
     /**
      * This function validates and process each player move. If invalid, do nothing
-     * If valid, then move the player accordingly (by calling the relevant functions)
+     * If valid, then move the player accordingly (by calling the relevant
+     * functions)
      * This method can be used by ANY/ALL players
      */
     public void processPlayerMove(int playerId, int row, int col) {
@@ -113,6 +156,21 @@ public class Maze {
 
     private boolean checkForCheese(int row, int col) {
         return (row == cheese.getRow() && col == cheese.getCol());
+
+    // Used with the client
+    public void processPlayerMove(int playerId, int row, int col, Client client) {
+        MazeObject temp = maze[row][col];
+        if (temp instanceof Cheese) {
+            cheeseFound(playerId, row, col);
+
+        } else if (!temp.isPassable()) {
+            // this is a wall, deal with it
+            System.out.println("Wall at " + row + ", " + col);
+
+        } else {
+            movePlayer(userId, row, col);
+            client.sendInputToServer(row, col);
+        }
     }
 
     private void cheeseFound(int playerId, int row, int col) {
@@ -138,7 +196,8 @@ public class Maze {
 
     /**
      * It reads PlayerMove packets applies the moves as indicated in the packet.
-     * This function does to need to validate whether the movement is valid. It assumes
+     * This function does to need to validate whether the movement is valid. It
+     * assumes
      * that only validated PlayerMoves are given.
      */
     private void movePlayer(int playerId, int row, int col) {
@@ -147,7 +206,6 @@ public class Maze {
         notifyClientAboutUserMove();
         printMaze();
     }
-
 
     /**
      * Makes all directly adjacent squares visible to the player
@@ -167,14 +225,6 @@ public class Maze {
         maze[playerRow + 1][playerCol + 1].setVisible(); // Bot right
     }
 
-
-    /**
-     * This method is called when a move is validated. It will move select player
-     * to target row and col
-     * @param playerId
-     * @param row
-     * @param col
-     */
     private void updatePlayerPosition(int playerId, int row, int col) {
         players[playerId].setRow(row);
         players[playerId].setCol(col);
@@ -261,16 +311,18 @@ public class Maze {
 
     // debug space end
 
-
     // The following code is for the server to use:
 
     /**
      * Right after generating a map, the server will also generate a cheese using
-     * this method. Then it will distribute the Map and other elements to all players
-     * Whenever a Cheese is verified to be eaten, the server will call this method again
+     * this method. Then it will distribute the Map and other elements to all
+     * players
+     * Whenever a Cheese is verified to be eaten, the server will call this method
+     * again
      * to replace a new cheese.
      */
-    public void placeCheeseRandomly() {
+    public int[] placeCheeseRandomly() {
+        int[] ret = new int[2];
         int cheeseRow;
         int cheeseCol;
         Random random = new Random();
@@ -284,11 +336,12 @@ public class Maze {
             if (temp.isPassable() && !checkForPlayer(-1, cheeseRow, cheeseCol)) {
                 cheese = new Cheese(cheeseCol, cheeseRow);
                 System.out.println("Cheese at " + cheeseRow + ", " + cheeseCol);
-                break;
+                ret[0] = cheeseRow;
+                ret[1] = cheeseCol;
+                return ret;
             }
         }
     }
-
 
     // The following methods are for Client code to use:
 
@@ -296,14 +349,16 @@ public class Maze {
      * This method is called when the player (user) moves onto a cheese block. They
      * will call this method, and client programmer can fill out the code
      */
-    public void notifyClientThatUserCollectedCheese() {}
-
+    public void notifyClientThatUserCollectedCheese() {
+    }
 
     /**
      * This is when a player (user) move gets validated (no walls, or cheese). They
-     * will be moving to that tile. This function will do some code that notifies the
+     * will be moving to that tile. This function will do some code that notifies
+     * the
      * Client, which will in turn do the necessary work and notify the server
      */
-    public void notifyClientAboutUserMove() {}
+    public void notifyClientAboutUserMove() {
+    }
 
 }

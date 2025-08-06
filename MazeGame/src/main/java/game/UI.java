@@ -25,7 +25,7 @@ public class UI extends Application {
     private Image imgFloor;
     private Image imgCheese;
     private Image imgDark;
-
+    private Client client = new Client();
 
     // Maze instance
     private Maze maze;
@@ -40,12 +40,15 @@ public class UI extends Application {
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
         Scene menuScene = new Scene(menuLayout, 400, 300);
-
-
+        try {
+            maze = client.setupConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Create the Maze object (generates the 2D array)
-        maze = new Maze();
-        maze.placeCheeseRandomly();
+        // maze = new Maze();
+        // maze.placeCheeseRandomly();
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = loadImage("1-1.png");
@@ -53,7 +56,6 @@ public class UI extends Application {
         imgFloor  = loadImage("floor_placeholder.png");
         imgCheese = loadImage("Cheese.png");
         imgDark = loadImage("dark_placeholder.png");
-
 
 
         // Get maze size from Maze class
@@ -111,8 +113,6 @@ public class UI extends Application {
         primaryStage.setTitle("Maze Game");
         primaryStage.show();
     }
-
-
 
     private void drawBoard(GraphicsContext gc) {
         MazeObject[][] grid = maze.getMaze();
