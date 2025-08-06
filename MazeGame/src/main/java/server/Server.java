@@ -16,8 +16,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 // Some basic setups for the server, will need to implement a lot of the server functions
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Server {
+    // Mutex stuff
+    private static final int numPlayers = 4;
+    private static ReentrantLock movementLock;
+
     private static final int MOVEPACKETSIZE = 3;
     private static final int PORT = 42042; // Random number, can be changed if needed
     private static ServerSocket serverSocket;
@@ -27,7 +32,9 @@ public class Server {
     // Global queue used for handling player moves. Each client thread validate
     // moves then queues to this queue.
     private static int[] cheeseCoords = new int[2];
-    private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids
+    private static int cheeseToWin = 3;
+    // private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids 
+    // Change: See line 23 and line 146
     private static List<Integer> availablePlayerIds;
     private static Maze maze;
     // Match state
@@ -99,7 +106,35 @@ public class Server {
                     // Etc
 
                     // If move is valid
-                    broadcastPlayerMove(move);
+                    // Change: Implemented
+                    switch (validatePlayerMove(move)) {
+                        // v for valid move
+                        case ('v') -> {
+                            broadcastPlayerMove(move);
+                        }
+
+                        // i for invalid move
+                        case ('i') -> {
+                            // Still must send the player's old move to indicate they haven't moved
+                            broadcastPlayerMove(new PlayerMove(move.getPlayerId(), maze.getPlayers()[move.getPlayerId()].getRow(), maze.getPlayers()[move.getPlayerId()].getCol()));
+                        }
+
+                        // c for cheese found => valid move
+                        case ('c') -> {
+                            cheeseCoords = maze.placeCheeseRandomly();
+                            broadcastCheeseCollection(move.getPlayerId(), move.getRow(), move.getCol(), cheeseCoords[0], cheeseCoords[1]);
+                        }
+
+                        // w for win => cheese found
+                        case ('w') -> {
+                            broadcastGameWin(move.getPlayerId());
+                        }
+
+                        default -> {
+                            System.out.println("ERROR PROCESSING USER MOVE\n");
+                        }
+
+                    }
                 }
             }
             // Check for win conditions, disconnections, etc.
@@ -116,10 +151,15 @@ public class Server {
         moves = new LinkedBlockingQueue<>();
         // Reset available player Ids
         availablePlayerIds = new ArrayList<Integer>();
-        for (int i = 0; i < PIDS.length; i++) {
-            availablePlayerIds.add(PIDS[i]);
+        // Change: next 2 lines used to say "PIDS". Now works with the locks
+        for (int i = 0; i < numPlayers; i++) {
+            availablePlayerIds.add(i);
         }
         System.out.println("Init available ids: " + availablePlayerIds);
+
+        // Create a new lock
+        movementLock = new ReentrantLock();
+
         // Cheese removed
         cheeseCoords[0] = -1;
         cheeseCoords[1] = -1;
@@ -184,6 +224,53 @@ public class Server {
             }
         }
         return true;
+    }
+
+    /* Return state of player move"
+        'v': Valid move
+        'i': Invalid move
+        'c': Cheese collected
+        'w': Third cheese collected => win
+    */
+    
+    private static char validatePlayerMove(PlayerMove move) {
+        Player currentPlayer = maze.getPlayers()[move.getPlayerId()]; // TODO: Shallow or deep copy?
+        MazeObject temp = maze.getMaze()[move.getRow()][move.getCol()];
+
+        // Lock mutex
+        movementLock.lock();
+
+        try {
+            // Check the place the player's trying to move to
+            if (temp instanceof Cheese) {
+                currentPlayer.addCheeseCount();
+                if (currentPlayer.getCheeseCount() == cheeseToWin) {
+                    return 'w';
+                } 
+
+                // Update player position internally
+                maze.updatePlayerPosition(currentPlayer, move.getRow(), move.getCol());
+
+                return 'c';
+
+            } else if (!temp.isPassable()) {
+                // Player collision (can't be a wall because client checks for that)
+                // Play bonk sound?
+
+                System.out.println("Player at " + move.getRow() + ", " + move.getCol());
+                return 'i';
+            } else {
+                // Player successfully moved
+
+                // Update player position internally
+                maze.updatePlayerPosition(currentPlayer, move.getRow(), move.getCol());
+
+                return 'v';
+            }
+        } finally {
+            // Call unlock in the event of an exception, and after any call to return
+            movementLock.unlock();
+        }
     }
 
     private static void broadcastPlayerMove(PlayerMove move) {
