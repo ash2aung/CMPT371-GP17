@@ -92,6 +92,7 @@ public class Server {
         System.out.println("Match start...");
         boolean gameActive = true;
         while (gameActive) {
+            System.out.println("game loop");
             if (!anyClientConnected()) {
                 System.out.println("All clients disconnected, ending match early");
                 gameActive = false;
@@ -155,6 +156,7 @@ public class Server {
 
     private static boolean anyClientConnected() {
         for (ClientHandler client : clients.values()) {
+            System.out.println(client.socket.isClosed());
             if (!client.socket.isClosed()) {
                 return true;
             }
