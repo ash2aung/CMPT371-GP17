@@ -289,6 +289,10 @@ public class Maze {
         }
     }
 
+    public void placeCheeseAt(int row, int col) {
+        cheese = new Cheese(col, row);
+    }
+
 
     // The following methods are for Client code to use:
 
