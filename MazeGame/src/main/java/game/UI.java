@@ -45,8 +45,25 @@ public class UI extends Application {
             e.printStackTrace();
         }
 
-        // add shutdown hook for properly closing socket when closing program
+        // Cleanup for when the window close
+        primaryStage.setOnCloseRequest(event -> {
+            System.out.println("Application closing, cleaning up connections...");
+            client.cleanup();
+
+            // Force exit if cleanup takes too long
+            new Thread(() -> {
+                try {
+                    Thread.sleep(2000); // Wait 2 seconds for graceful cleanup
+                    System.exit(0); // Force exit if still running
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        });
+
+        // Keep the shutdown hook as backup for JVM shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("JVM shutting down, cleaning up...");
             client.cleanup();
         }));
 
