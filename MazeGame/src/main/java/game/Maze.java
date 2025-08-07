@@ -29,6 +29,7 @@ public class Maze {
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
 
         removeWallsAroundPlayers();
+        loadWallGraphics();
 
 
     }
@@ -343,6 +344,82 @@ public class Maze {
         maze[row - 1][col] = new MazeObject(true, true);    // top
         maze[row][col - 1] = new MazeObject(true, true);    // left
         maze[row - 1][col - 1] = new MazeObject(true, true); // top left
+
+    }
+
+    private void loadWallGraphics() {
+        for (int row = 1; row < NUM_OF_ROWS - 1; row++) {
+            for (int col = 1; col < NUM_OF_COLUMNS - 1; col++) {
+                MazeObject obj = maze[row][col];
+
+                // If not a wall, then skip
+                if (obj.isPassable()) {
+                    continue;
+                }
+
+                boolean top = !maze[row - 1][col].isPassable();
+                boolean bot = !maze[row + 1][col].isPassable();
+                boolean left = !maze[row][col - 1].isPassable();
+                boolean right = !maze[row][col + 1].isPassable();
+
+                // T-shaped walls
+                if (top && left && right) {
+                    obj.setImageFilePath("wall_sprites/T-1.png");
+                } else if (top && left && bot) {
+                    obj.setImageFilePath("wall_sprites/T-2.png");
+                } else if (left && right && bot) {
+                    obj.setImageFilePath("wall_sprites/T-3.png");
+                } else if (top && right && bot) {
+                    obj.setImageFilePath("wall_sprites/T-4.png");
+                }
+
+                // L-shaped walls
+                else if (top && right) {
+                    obj.setImageFilePath("wall_sprites/L-1.png");
+                } else if (top && left) {
+                    obj.setImageFilePath("wall_sprites/L-2.png");
+                } else if (left && bot) {
+                    obj.setImageFilePath("wall_sprites/L-3.png");
+                } else if (bot && right) {
+                    obj.setImageFilePath("wall_sprites/L-4.png");
+                }
+
+                // Horizontal and Vertical
+                else if (left && right) {
+                    obj.setImageFilePath("wall_sprites/hori.png");
+                } else if (top && bot){
+                    obj.setImageFilePath("wall_sprites/verti.png");
+                } else if (left || right) {
+                    obj.setImageFilePath("wall_sprites/hori.png");
+                } else if (top || bot) {
+                    obj.setImageFilePath("wall_sprites/verti.png");
+                } else {
+                    obj.setImageFilePath("wall_sprites/Single_block.png");
+                }
+
+            }
+        }
+
+        loadBorderGraphics();
+    }
+
+    private void loadBorderGraphics() {
+
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                if (row == 0 || row == NUM_OF_ROWS - 1) {
+                    maze[row][col].setImageFilePath("wall_sprites/hori.png");
+                } else if (col == 0 || col == NUM_OF_COLUMNS - 1) {
+                    maze[row][col].setImageFilePath("wall_sprites/verti.png");
+                }
+            }
+        }
+
+        // load graphic for the 4 corners
+        maze[0][0].setImageFilePath("wall_sprites/L-4.png");
+        maze[0][NUM_OF_COLUMNS - 1].setImageFilePath("wall_sprites/L-3.png");
+        maze[NUM_OF_ROWS - 1][0].setImageFilePath("wall_sprites/L-1.png");
+        maze[NUM_OF_ROWS - 1][NUM_OF_COLUMNS - 1].setImageFilePath("wall_sprites/L-2.png");
 
     }
 
