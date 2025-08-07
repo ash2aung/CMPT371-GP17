@@ -34,7 +34,6 @@ public class Server {
     // moves then queues to this queue.
     private static int[] cheeseCoords = new int[2];
     private static final int CHEESE_TO_WIN = 3;
-    // private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids 
     // Change: See line 23 and line 146
     private static List<Integer> availablePlayerIds;
     private static Maze maze;
@@ -134,7 +133,6 @@ public class Server {
                         default -> {
                             System.out.println("ERROR PROCESSING USER MOVE\n");
                         }
-
                     }
                 }
             }

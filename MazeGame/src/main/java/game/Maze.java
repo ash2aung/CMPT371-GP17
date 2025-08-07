@@ -170,7 +170,6 @@ public class Maze {
     }
 
     private void cheeseFound(int playerId, int row, int col) {
-        placeCheeseRandomly(); // temporary method for game testing. REMOVE IT AFTERWARDS
 
         if (playerId == userId) {
             notifyClientThatUserCollectedCheese();
