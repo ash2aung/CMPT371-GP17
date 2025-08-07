@@ -249,7 +249,7 @@ public class Server {
                 } 
 
                 // Update player position internally
-                maze.updatePlayerPosition(currentPlayer, move.getRow(), move.getCol());
+                maze.movePlayer(move.getPlayerId(), move.getRow(), move.getCol());
 
                 return 'c';
 
@@ -263,7 +263,7 @@ public class Server {
                 // Player successfully moved
 
                 // Update player position internally
-                maze.updatePlayerPosition(currentPlayer, move.getRow(), move.getCol());
+                maze.movePlayer(move.getPlayerId(), move.getRow(), move.getCol());
 
                 return 'v';
             }
