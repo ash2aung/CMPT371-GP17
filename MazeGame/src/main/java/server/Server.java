@@ -81,7 +81,7 @@ public class Server {
         }
         // Start the game
         // Place a cheese
-        cheeseCoords = maze.placeCheeseRandomly();
+        cheeseCoords = maze.placeCheeseRandomly(); // TODO: Change this to using maze's internal cheese
         System.out.println("Cheese coords: " + cheeseCoords);
         // Broadcast maze to clients
         broadcastMazeToAllClients();
@@ -261,7 +261,7 @@ public class Server {
     // Processes the maze
     private static byte[] processMaze(MazeObject[][] mazeGrid) {
         final int MAZE_SIZE = MAZESIZE * MAZESIZE;
-        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; // 
+        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; //
         byte[] mazePacket = new byte[PACKET_SIZE];
         // Process each tile in the maze
         System.out.println("Processing maze");

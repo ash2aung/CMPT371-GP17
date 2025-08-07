@@ -23,7 +23,6 @@ public class Maze {
         addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1); // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
-
     }
 
     private void addPlayerToBoard(int playerId, int row, int col) {
