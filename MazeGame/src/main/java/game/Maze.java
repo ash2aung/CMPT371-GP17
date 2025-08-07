@@ -196,7 +196,7 @@ public class Maze {
      * assumes
      * that only validated PlayerMoves are given.
      */
-    private void movePlayer(int playerId, int row, int col) {
+    public void movePlayer(int playerId, int row, int col) {
         updatePlayerPosition(playerId, row, col);
         updateVisibilityAroundPlayer(playerId);
         notifyClientAboutUserMove();
