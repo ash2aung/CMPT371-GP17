@@ -8,9 +8,12 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class UI extends Application {
 
@@ -19,12 +22,14 @@ public class UI extends Application {
     private static final double PLAYER_HEIGHT = 32 * 1.5;
     private static final double PLAYER_HEIGHT_OFFSET = TILE_SIZE - PLAYER_HEIGHT;
 
+
     // Placeholder images
     private Image imgPlayer;
     private Image imgWall;
     private Image imgFloor;
     private Image imgCheese;
     private Image imgDark;
+    private final Map<String, Image> imageCache = new HashMap<>();
     private Client client = new Client();
 
     // Maze instance
@@ -39,7 +44,21 @@ public class UI extends Application {
 
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
-        Scene menuScene = new Scene(menuLayout, 400, 300);
+
+        Image backgroundImage = loadImage("Welcome.png");
+
+        BackgroundImage bgImage = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO,
+                        false, false, true, false)
+        );
+
+        menuLayout.setBackground(new Background(bgImage));
+
+        Scene menuScene = new Scene(menuLayout, 32 * 20, 32 * 20);
 //        try {
 //            maze = client.setupConnection();
 //        } catch (Exception e) {
@@ -49,11 +68,12 @@ public class UI extends Application {
         // Create the Maze object (generates the 2D array)
          maze = new Maze();
          maze.placeCheeseRandomly();
+         maze.revealEntireMaze();
 
         // Load images (make sure these are in src/main/resources/game/)
-        imgPlayer = loadImage("1-1.png");
+        imgPlayer = loadImage("player_sprites/1-1.png");
         imgWall   = loadImage("wall_placeholder.png");
-        imgFloor  = loadImage("floor_placeholder.png");
+        imgFloor  = loadImage("Floor.png");
         imgCheese = loadImage("Cheese.png");
         imgDark = loadImage("dark_placeholder.png");
 
@@ -123,8 +143,10 @@ public class UI extends Application {
 
                 if (!obj.isVisible()) {
                     drawImage(gc, imgDark, row, col);
+
                 } else if (!obj.isPassable()) {
-                    drawImage(gc, imgWall, row, col);
+                    Image wallImage = getCachedImage(obj.getImageFilePath());
+                    drawImage(gc, wallImage, row, col);
                 } else {
                     drawImage(gc, imgFloor, row, col);
                 }
@@ -162,7 +184,19 @@ public class UI extends Application {
 
     private Image loadImage(String filename) {
         return new Image(getClass().getResourceAsStream("/game/" + filename));
+
     }
+
+    private Image getCachedImage(String filename) {
+        if (imageCache.containsKey(filename)) {
+            return imageCache.get(filename);
+        } else {
+            Image img = loadImage(filename);
+            imageCache.put(filename, img);
+            return img;
+        }
+    }
+
 
 
 
