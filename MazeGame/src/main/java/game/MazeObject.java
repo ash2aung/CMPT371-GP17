@@ -1,5 +1,7 @@
 package game;
 
+import javafx.scene.image.Image;
+
 import java.util.Objects;
 
 /**
@@ -15,6 +17,8 @@ public class MazeObject {
     protected int row;
     protected boolean passable = true;
     protected boolean visible = false;
+
+    private String imageFilePath = "wall_placeholder.png";
 
     /**
      * Only used for Paths and Walls
@@ -165,5 +169,14 @@ public class MazeObject {
      */
     public void setPassable(boolean passable) {
         this.passable = passable;
+    }
+
+
+    public String getImageFilePath() {
+        return imageFilePath;
+    }
+
+    public void setImageFilePath(String imageFilePath) {
+        this.imageFilePath = imageFilePath;
     }
 }
