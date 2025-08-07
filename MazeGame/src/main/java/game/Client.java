@@ -275,7 +275,16 @@ public class Client {
         return maze;
     }
 
-    public Socket getSocket() {
-        return socket;
+    public void cleanup() {
+        try {
+            if (socket != null && (!socket.isClosed())) {
+                socket.close();
+            }
+            os.close();
+            is.close();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,8 +1,5 @@
 package game;
 
-import java.io.IOException;
-import java.net.Socket;
-
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -48,17 +45,9 @@ public class UI extends Application {
             e.printStackTrace();
         }
 
-        Socket socket = client.getSocket();
         // add shutdown hook for properly closing socket when closing program
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                if (socket != null && !socket.isClosed()) {
-                    System.out.println("Shutdown hook: Closing socket...");
-                    socket.close(); // Gracefully close the socket
-                }
-            } catch (IOException e) {
-                System.err.println("Error closing socket: " + e.getMessage());
-            }
+            client.cleanup();
         }));
 
         // Create the Maze object (generates the 2D array)
