@@ -8,16 +8,20 @@ import game.Player;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 // Some basic setups for the server, will need to implement a lot of the server functions
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Server {
+    // Mutex stuff
+    private static final int numPlayers = 4;
+    private static ReentrantLock movementLock;
+
+    private static final int MAZE_SIDE = 20;
     private static final int MOVEPACKETSIZE = 3;
     private static final int PORT = 42042; // Random number, can be changed if needed
     private static ServerSocket serverSocket;
@@ -26,8 +30,9 @@ public class Server {
     private static BlockingQueue<PlayerMove> moves;
     // Global queue used for handling player moves. Each client thread validate
     // moves then queues to this queue.
-    private static int[] cheeseCoords = new int[2];
-    private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids
+    private static int[] cheeseCoords = new int[2]; // I've decided that it's fine and better to keep cheeseCoords
+    private static final int CHEESE_TO_WIN = 3;
+    // Change: See line 23 and line 146
     private static List<Integer> availablePlayerIds;
     private static Maze maze;
     // Match state
@@ -56,10 +61,10 @@ public class Server {
             e.printStackTrace();
         }
 
+        System.out.println("Waiting for player connections...");
         // Loop for accepting 4 client connections
         while (availablePlayerIds.size() != 0) {
             try {
-                System.out.println("Waiting for more connection");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
@@ -69,7 +74,6 @@ public class Server {
                 e.printStackTrace();
                 return; // early exit
             }
-            System.out.println("list size = " + availablePlayerIds.size());
         }
 
         System.out.println("4 players connected.");
@@ -81,13 +85,18 @@ public class Server {
         // Start the game
         // Place a cheese
         cheeseCoords = maze.placeCheeseRandomly();
-        System.out.println("Cheese coords: " + cheeseCoords);
         // Broadcast maze to clients
         broadcastMazeToAllClients();
 
         // Game loop - process moves and handle game state
+        System.out.println("Match start...");
         boolean gameActive = true;
         while (gameActive) {
+            if (!anyClientConnected()) {
+                System.out.println("All clients disconnected, ending match early");
+                gameActive = false;
+                break;
+            }
             // Process any queued moves (if using the queue approach)
             while (!moves.isEmpty()) {
                 PlayerMove move = moves.poll();
@@ -99,13 +108,88 @@ public class Server {
                     // Etc
 
                     // If move is valid
-                    broadcastPlayerMove(move);
+                    // Change: Implemented
+                    switch (validatePlayerMove(move)) {
+                        // v for valid move
+                        case ('v') -> {
+                            broadcastPlayerMove(move);
+                        }
+
+                        // i for invalid move
+                        case ('i') -> {
+                            // Still must send the player's old move to indicate they haven't moved
+                            broadcastPlayerMove(
+                                    new PlayerMove(move.getPlayerId(), maze.getPlayers()[move.getPlayerId()].getRow(),
+                                            maze.getPlayers()[move.getPlayerId()].getCol()));
+                        }
+
+                        // c for cheese found => valid move
+                        case ('c') -> {
+                            cheeseCoords = maze.placeCheeseRandomly();
+                            broadcastCheeseCollection(move.getPlayerId(), move.getRow(), move.getCol(), cheeseCoords[0],
+                                    cheeseCoords[1]);
+                        }
+
+                        // w for win => cheese found
+                        case ('w') -> {
+                            broadcastGameWin(move.getPlayerId());
+                            gameActive = false; // Game stops
+                        }
+
+                        default -> {
+                            System.out.println("ERROR PROCESSING USER MOVE\n");
+                        }
+                    }
                 }
             }
-            // Check for win conditions, disconnections, etc.
-            // More game logic if needed
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                gameActive = false;
+            }
+        }
+        // Clean up
+        matchCleanup();
+    }
+
+    private static boolean anyClientConnected() {
+        for (ClientHandler client : clients.values()) {
+            if (client.socket.isClosed()) {
+                continue; // This client is disconnected
+            }
+
+            // Test if the connection is actually alive with a ping
+            try {
+                byte[] pingPacket = new byte[4];
+                pingPacket[0] = (byte) 0b11100000; // Token 0b111
+                client.out.write(pingPacket);
+                client.out.flush();
+                return true; // At least one client responded to ping
+            } catch (IOException e) {
+                System.out.println("Client " + client.playerId + " failed ping test");
+                // Continue checking other clients
+            }
+        }
+        return false; // No clients connected or responsive
+    }
+
+    private static void matchCleanup() {
+        System.out.println("Match ended, cleaning up...");
+
+        for (ClientHandler client : clients.values()) {
+            try {
+                if (!client.socket.isClosed()) {
+                    client.socket.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
+        clients.clear();
+
+        System.out.println("Clients cleaned up, ready for new match");
     }
 
     // Sets states to starting defaults
@@ -116,10 +200,15 @@ public class Server {
         moves = new LinkedBlockingQueue<>();
         // Reset available player Ids
         availablePlayerIds = new ArrayList<Integer>();
-        for (int i = 0; i < PIDS.length; i++) {
-            availablePlayerIds.add(PIDS[i]);
+        // Change: next 2 lines used to say "PIDS". Now works with the locks
+        for (int i = 0; i < numPlayers; i++) {
+            availablePlayerIds.add(i);
         }
         System.out.println("Init available ids: " + availablePlayerIds);
+
+        // Create a new lock
+        movementLock = new ReentrantLock();
+
         // Cheese removed
         cheeseCoords[0] = -1;
         cheeseCoords[1] = -1;
@@ -139,8 +228,6 @@ public class Server {
             char[] authBuffer = new char[VALID_AUTH.length()];
             inReader.read(authBuffer, 0, VALID_AUTH.length());
 
-            // Check length first in case somebody spamming or something, idk
-            // TODO: double check for valid socket closing and closing other things
             if (!isValidAuth(authBuffer)) {
                 System.out.println(clientSocket.getInetAddress() + " Client rejected, auth: " + new String(authBuffer));
                 clientSocket.close();
@@ -184,6 +271,53 @@ public class Server {
             }
         }
         return true;
+    }
+
+    /*
+     * Return state of player move"
+     * 'v': Valid move
+     * 'i': Invalid move
+     * 'c': Cheese collected
+     * 'w': Third cheese collected => win
+     */
+    private static char validatePlayerMove(PlayerMove move) {
+        Player currentPlayer = maze.getPlayers()[move.getPlayerId()];
+        MazeObject temp = maze.getMaze()[move.getRow()][move.getCol()];
+
+        // Lock mutex
+        movementLock.lock();
+
+        try {
+            // Check the place the player's trying to move to
+            if (temp instanceof Cheese) {
+                currentPlayer.addCheeseCount();
+                if (currentPlayer.getCheeseCount() == CHEESE_TO_WIN) {
+                    return 'w';
+                }
+
+                // Update player position internally
+                maze.movePlayer(move.getPlayerId(), move.getRow(), move.getCol());
+
+                return 'c';
+
+            } else if (!temp.isPassable()) {
+                // Player collision (can't be a wall because client checks for that)
+                // Play bonk sound?
+
+                System.out.println("Player at " + move.getRow() + ", " + move.getCol());
+                return 'i';
+            } else {
+                // Player successfully moved
+
+                // Update player position internally
+                maze.movePlayer(move.getPlayerId(), move.getRow(), move.getCol());
+
+                return 'v';
+            }
+        } finally {
+            // Call unlock in the event of an exception, and after any call to return
+            movementLock.unlock();
+        }
     }
 
     private static void broadcastPlayerMove(PlayerMove move) {
@@ -259,14 +393,14 @@ public class Server {
 
     // Processes the maze
     private static byte[] processMaze(MazeObject[][] mazeGrid) {
-        final int MAZE_SIZE = 32 * 32;
-        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; // 512 bytes
+        final int MAZE_SIZE = MAZE_SIDE * MAZE_SIDE;
+        final int PACKET_SIZE = MAZE_SIZE * 4 / 8; //
         byte[] mazePacket = new byte[PACKET_SIZE];
         // Process each tile in the maze
         System.out.println("Processing maze");
         for (int i = 0; i < MAZE_SIZE; i++) {
-            int row = i / 32;
-            int col = i % 32;
+            int row = i / MAZE_SIDE;
+            int col = i % MAZE_SIDE;
 
             // Get the maze object at this position
             MazeObject obj = mazeGrid[row][col];
@@ -288,7 +422,7 @@ public class Server {
         if (cheeseCoords[0] >= 0 && cheeseCoords[1] >= 0) {
             int cheeseR = cheeseCoords[0];
             int cheeseC = cheeseCoords[1];
-            int tileIndex = (cheeseR * 32) + cheeseC; // Tile index (0-1023)
+            int tileIndex = (cheeseR * MAZE_SIDE) + cheeseC; // Tile index (0-1023)
             int byteIndex = tileIndex / 2; // Byte index (0-511)
 
             byte temp = mazePacket[byteIndex]; // Get existing byte
@@ -334,22 +468,26 @@ public class Server {
 
         public void handleMessages() throws Exception {
             byte[] input = new byte[MOVEPACKETSIZE];
-            while (true) {
-                // Receive move packet from client
-                int bytesRead = 0;
-                while (bytesRead < MOVEPACKETSIZE) {
-                    int result = in.read(input, bytesRead, MOVEPACKETSIZE - bytesRead);
-                    if (result == -1) {
-                        throw new IOException("Issue reading move packets from client");
+            try {
+                while (!socket.isClosed()) {
+                    // Receive move packet from client
+                    int bytesRead = 0;
+                    while (bytesRead < MOVEPACKETSIZE) {
+                        int result = in.read(input, bytesRead, MOVEPACKETSIZE - bytesRead);
+                        if (result == -1) {
+                            throw new IOException("Issue reading move packets from client");
+                        }
+                        bytesRead += result;
                     }
-                    bytesRead += result;
+
+                    // Process into a PlayerMove object
+                    PlayerMove move = processMovePacket(input);
+
+                    // Add to the BlockingQueue
+                    moves.add(move);
                 }
-
-                // Process into a PlayerMove object
-                PlayerMove move = processMovePacket(input);
-
-                // Add to the BlockingQueue
-                moves.add(move);
+            } catch (IOException e) {
+                System.err.println("Client " + playerId + " disconnected: " + e.getMessage());
             }
         }
 

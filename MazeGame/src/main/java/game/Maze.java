@@ -6,29 +6,25 @@ public class Maze {
     final static int NUM_OF_COLUMNS = 20;
     final static int NUM_OF_ROWS = 20;
 
-
     private MazeObject[][] maze;
     private Player[] players = new Player[4];
     private Cheese cheese;
 
     // This is the id of the game player/client/user. So this is you.
-    // It will be distributed by the server at the start of thegame
+    // It will be distributed by the server at the start of the game
     private int userId = 0;
-
-    public Player[] getPlayers() {
-        return players;
-    }
 
     public Maze() {
         // Create board
         maze = new MazeBuilder(NUM_OF_ROWS, NUM_OF_COLUMNS).getMaze();
+        revealBorders();
 
         // Add players to board
         addPlayerToBoard(0, 1, 1); // top left
         addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1); // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
-
+        removeWallsAroundPlayers();
 
     }
 
@@ -58,7 +54,7 @@ public class Maze {
     /**
      * Temporary function. May be replaced when Canvas comes in.
      * Need to deal with lower and upper cases later
-     * 
+     *
      * @param key It's the WASD key inputs
      */
     public void moveWithUserInput(char key) {
@@ -131,10 +127,12 @@ public class Maze {
     }
 
     /**
-     * This method will take in a row and col, and check if that cell has another player
+     * This method will take in a row and col, and check if that cell has another
+     * player
+     * 
      * @param playerId The player we want to check for
-     * @param row Row number
-     * @param col Column number
+     * @param row      Row number
+     * @param col      Column number
      * @return True if collision, false otherwise
      */
     private boolean checkForPlayer(int playerId, int row, int col) {
@@ -156,6 +154,7 @@ public class Maze {
 
     private boolean checkForCheese(int row, int col) {
         return (row == cheese.getRow() && col == cheese.getCol());
+    }
 
     // Used with the client
     public void processPlayerMove(int playerId, int row, int col, Client client) {
@@ -174,7 +173,7 @@ public class Maze {
     }
 
     private void cheeseFound(int playerId, int row, int col) {
-        placeCheeseRandomly(); // temporary method for game testing. REMOVE IT AFTERWARDS
+        placeCheeseRandomly(); // temporary method for game testing. REMOVE IT AFTERWARD
 
         if (playerId == userId) {
             notifyClientThatUserCollectedCheese();
@@ -200,7 +199,7 @@ public class Maze {
      * assumes
      * that only validated PlayerMoves are given.
      */
-    private void movePlayer(int playerId, int row, int col) {
+    public void movePlayer(int playerId, int row, int col) {
         updatePlayerPosition(playerId, row, col);
         updateVisibilityAroundPlayer(playerId);
         notifyClientAboutUserMove();
@@ -225,11 +224,18 @@ public class Maze {
         maze[playerRow + 1][playerCol + 1].setVisible(); // Bot right
     }
 
+    /**
+     * This method is called when a move is validated. It will move select player
+     * to target row and col
+     * 
+     * @param playerId ID of the player we want to move
+     * @param row      Target row of the intended move
+     * @param col      Target col of the intended move
+     */
     private void updatePlayerPosition(int playerId, int row, int col) {
         players[playerId].setRow(row);
         players[playerId].setCol(col);
     }
-
 
     public void printMaze() {
         for (int row = 0; row < NUM_OF_ROWS; row++) {
@@ -245,7 +251,8 @@ public class Maze {
 
     public void printMazeObject(int row, int col) {
         MazeObject obj = maze[row][col];
-        // here, we use -1 because no playerId can be -1. SO this will check for ALL players
+        // here, we use -1 because no playerId can be -1. SO this will check for ALL
+        // players
         if (checkForPlayer(-1, row, col)) {
             System.out.print(getPlayerWithRowCol(row, col) + " ");
 
@@ -265,11 +272,14 @@ public class Maze {
     }
 
     /**
-     * Gets the player, given row and col. Use ONLY if player is confirmed to be in that position
+     * Gets the player, given row and col. Use ONLY if player is confirmed to be in
+     * that position
      * Otherwise, it'll break the code
-     * @param row
-     * @param col
-     * @return
+     * 
+     * @param row Target row to find Player
+     * @param col Target col to find player
+     * @return A player object at row, col
+     * 
      */
     private Player getPlayerWithRowCol(int row, int col) {
         for (int i = 0; i < 4; i++) {
@@ -292,6 +302,49 @@ public class Maze {
         printMaze();
     }
 
+    private void revealBorders() {
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                if (row == 0 || row == NUM_OF_ROWS - 1) {
+                    maze[row][col].setVisible();
+                } else if (col == 0 || col == NUM_OF_COLUMNS - 1) {
+                    maze[row][col].setVisible();
+                }
+            }
+        }
+    }
+
+    private void removeWallsAroundPlayers() {
+        int row, col;
+        // player 0, starting at top left corner
+        row = players[0].getRow();
+        col = players[0].getCol();
+        maze[row][col + 1] = new MazeObject(true, true); // right
+        maze[row + 1][col] = new MazeObject(true, true); // bottom
+        maze[row + 1][col + 1] = new MazeObject(true, true); // bottom right
+
+        // player 1, starting at top right corner
+        row = players[1].getRow();
+        col = players[1].getCol();
+        maze[row][col - 1] = new MazeObject(true, true); // left
+        maze[row + 1][col] = new MazeObject(true, true); // bottom
+        maze[row + 1][col - 1] = new MazeObject(true, true); // bottom left
+
+        // player 2, starting at bottom left corner
+        row = players[2].getRow();
+        col = players[2].getCol();
+        maze[row - 1][col] = new MazeObject(true, true); // top
+        maze[row][col + 1] = new MazeObject(true, true); // right
+        maze[row - 1][col + 1] = new MazeObject(true, true); // top right
+
+        // player 3, starting at bottom right corner
+        row = players[3].getRow();
+        col = players[3].getCol();
+        maze[row - 1][col] = new MazeObject(true, true); // top
+        maze[row][col - 1] = new MazeObject(true, true); // left
+        maze[row - 1][col - 1] = new MazeObject(true, true); // top left
+
+    }
 
     // getters
 
@@ -341,6 +394,10 @@ public class Maze {
                 return ret;
             }
         }
+    }
+
+    public void placeCheeseAt(int row, int col) {
+        cheese = new Cheese(col, row);
     }
 
     // The following methods are for Client code to use:

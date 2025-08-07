@@ -6,25 +6,26 @@ import java.net.*;
 public class Client {
     private static final int SERVER_PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
-    // TODO: What's happening with this? Send during first connection?
     private static final String SERVER_IP = "44.252.10.0"; // AWS VPS IP
 
+    private static Socket socket;
     private static OutputStream os;
     private static InputStream is;
     private static PrintWriter out;
 
+    private static final int MAZE_SIDE = 20;
     private static final int sendMovePacketSize = 3;
-    private static final int receiveMazePacketSize = 32 * 32 * 4 / 8;
+    private static final int receiveMazePacketSize = MAZE_SIDE * MAZE_SIDE * 4 / 8;
     private static final int receiveOtherPacketSize = 4;
     private static int userID = -1;
 
-    private static final int MAZE_SIZE = 32 * 32;
+    private static final int MAZE_SIZE = MAZE_SIDE * MAZE_SIDE;
 
     private byte[] buildPacket(int row, int col) {
         byte[] packet = new byte[sendMovePacketSize];
         byte moveToken = 0b010; // bit encoding for token "MOVE"
 
-        // Assuming row and col will be 5b each => maze is 32x32
+        // Assuming row and col will be 5b each => maze is 20x20
         packet[0] = (byte) (((moveToken << 5) & 0b11100000) | ((userID << 3) & 0b00011000) | ((row >> 2) & 0b00000111));
         packet[1] = (byte) (((row << 6) & 0b11000000) | ((col << 1) & 0b00111110));
         return packet;
@@ -78,6 +79,10 @@ public class Client {
                 int playerID = ((input[0] >> 3) & 0b00000011);
                 // displayGameOverScreen(playerID);
                 return false;
+            }
+            case 0b111: {
+                // Ping packet, do nothing
+                break;
             }
             default:
                 System.out.println("ISSUE WITH INTERPRETING OTHER PACKET FROM SERVER'S TOKEN\n");
@@ -169,8 +174,8 @@ public class Client {
             }
 
             // Set current coords
-            int row = i / 32;
-            int col = i % 32;
+            int row = i / MAZE_SIDE;
+            int col = i % MAZE_SIDE;
 
             switch ((int) tileDescription) {
                 case 0b0000: {
@@ -204,8 +209,9 @@ public class Client {
                 }
                 case 0b0110: {
                     // Cheese
-                    maze.getMaze()[row][col] = new Cheese(row, col); // TODO: Currently overriding decorations on this
-                                                                     // tile
+                    // TODO: Currently overriding decorations on this
+                    // tile
+                    maze.placeCheeseAt(row, col);
                     break;
                 }
                 case 0b0111: // Player 1
@@ -227,7 +233,7 @@ public class Client {
     }
 
     public Maze setupConnection() throws IOException {
-        Socket socket = null;
+        socket = null;
         try {
             // Set up I/O streams
             socket = new Socket(SERVER_IP, SERVER_PORT);
@@ -267,5 +273,18 @@ public class Client {
         sendThread.start();
 
         return maze;
+    }
+
+    public void cleanup() {
+        try {
+            if (socket != null && (!socket.isClosed())) {
+                socket.close();
+            }
+            os.close();
+            is.close();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,4 +1,6 @@
 target/
+target/classes/server/Server$ClientHandler.class
+target/classes/server/Server.class
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
