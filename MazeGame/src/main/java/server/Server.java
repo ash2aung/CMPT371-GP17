@@ -61,10 +61,10 @@ public class Server {
             e.printStackTrace();
         }
 
+        System.out.println("Waiting for player connections...");
         // Loop for accepting 4 client connections
         while (availablePlayerIds.size() != 0) {
             try {
-                System.out.println("Waiting for more connection");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
@@ -74,7 +74,6 @@ public class Server {
                 e.printStackTrace();
                 return; // early exit
             }
-            System.out.println("list size = " + availablePlayerIds.size());
         }
 
         System.out.println("4 players connected.");
@@ -86,15 +85,15 @@ public class Server {
         // Start the game
         // Place a cheese
         cheeseCoords = maze.placeCheeseRandomly();
-        System.out.println("Cheese coords: " + cheeseCoords);
         // Broadcast maze to clients
         broadcastMazeToAllClients();
 
         // Game loop - process moves and handle game state
+        System.out.println("Match start...");
         boolean gameActive = true;
         while (gameActive) {
             if (!anyClientConnected()) {
-                System.out.println("Not all clients connected, ending match early");
+                System.out.println("All clients disconnected, ending match early");
                 gameActive = false;
                 break;
             }
