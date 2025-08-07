@@ -32,7 +32,7 @@ public class Server {
     // Global queue used for handling player moves. Each client thread validate
     // moves then queues to this queue.
     private static int[] cheeseCoords = new int[2];
-    private static int cheeseToWin = 3;
+    private static final int CHEESE_TO_WIN = 3;
     // private static final int[] PIDS = { 0, 1, 2, 3 }; // Player ids 
     // Change: See line 23 and line 146
     private static List<Integer> availablePlayerIds;
@@ -232,9 +232,8 @@ public class Server {
         'c': Cheese collected
         'w': Third cheese collected => win
     */
-    
     private static char validatePlayerMove(PlayerMove move) {
-        Player currentPlayer = maze.getPlayers()[move.getPlayerId()]; // TODO: Shallow or deep copy?
+        Player currentPlayer = maze.getPlayers()[move.getPlayerId()];
         MazeObject temp = maze.getMaze()[move.getRow()][move.getCol()];
 
         // Lock mutex
@@ -244,7 +243,7 @@ public class Server {
             // Check the place the player's trying to move to
             if (temp instanceof Cheese) {
                 currentPlayer.addCheeseCount();
-                if (currentPlayer.getCheeseCount() == cheeseToWin) {
+                if (currentPlayer.getCheeseCount() == CHEESE_TO_WIN) {
                     return 'w';
                 } 
 
