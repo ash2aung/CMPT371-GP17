@@ -138,9 +138,9 @@ public class Server {
                     }
                 }
             }
-            // Clean up
-            matchCleanup();
         }
+        // Clean up
+        matchCleanup();
     }
 
     private static void matchCleanup() {
