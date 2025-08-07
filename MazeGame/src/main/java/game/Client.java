@@ -13,13 +13,13 @@ public class Client {
     private static InputStream is;
     private static PrintWriter out;
 
-    private static final int MAZESIZE = 20; // TODO: bad naming
+    private static final int MAZE_SIDE = 20;
     private static final int sendMovePacketSize = 3;
-    private static final int receiveMazePacketSize = MAZESIZE * MAZESIZE * 4 / 8;
+    private static final int receiveMazePacketSize = MAZE_SIDE * MAZE_SIDE * 4 / 8;
     private static final int receiveOtherPacketSize = 4;
     private static int userID = -1;
 
-    private static final int MAZE_SIZE = MAZESIZE * MAZESIZE;
+    private static final int MAZE_SIZE = MAZE_SIDE * MAZE_SIDE;
 
     private byte[] buildPacket(int row, int col) {
         byte[] packet = new byte[sendMovePacketSize];
@@ -170,8 +170,8 @@ public class Client {
             }
 
             // Set current coords
-            int row = i / MAZESIZE;
-            int col = i % MAZESIZE;
+            int row = i / MAZE_SIDE;
+            int col = i % MAZE_SIDE;
 
             switch ((int) tileDescription) {
                 case 0b0000: {
