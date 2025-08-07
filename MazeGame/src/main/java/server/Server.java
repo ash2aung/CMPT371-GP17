@@ -101,6 +101,7 @@ public class Server {
             while (!moves.isEmpty()) {
                 PlayerMove move = moves.poll();
                 if (move != null) {
+                    System.out.println("Processing move from player " + move.getPlayerId());
                     // Validate and process move
                     // Update state of the maze
                     // Check for cheese and win
