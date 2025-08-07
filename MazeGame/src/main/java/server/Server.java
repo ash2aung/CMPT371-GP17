@@ -156,12 +156,23 @@ public class Server {
 
     private static boolean anyClientConnected() {
         for (ClientHandler client : clients.values()) {
-            System.out.println(client.socket.isClosed());
-            if (!client.socket.isClosed()) {
-                return true;
+            if (client.socket.isClosed()) {
+                continue; // This client is definitely disconnected
+            }
+
+            // Test if the connection is actually alive with a ping
+            try {
+                byte[] pingPacket = new byte[4];
+                pingPacket[0] = (byte) 0b11100000; // Token 0b111
+                client.out.write(pingPacket);
+                client.out.flush();
+                return true; // At least one client responded to ping
+            } catch (IOException e) {
+                System.out.println("Client " + client.playerId + " failed ping test");
+                // Continue checking other clients
             }
         }
-        return false;
+        return false; // No clients connected or responsive
     }
 
     private static void matchCleanup() {

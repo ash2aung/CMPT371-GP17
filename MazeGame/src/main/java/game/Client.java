@@ -80,6 +80,10 @@ public class Client {
                 // displayGameOverScreen(playerID);
                 return false;
             }
+            case 0b111: {
+                // Ping packet, do nothing
+                break;
+            }
             default:
                 System.out.println("ISSUE WITH INTERPRETING OTHER PACKET FROM SERVER'S TOKEN\n");
         }
