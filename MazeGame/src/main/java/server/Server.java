@@ -93,6 +93,11 @@ public class Server {
         // Game loop - process moves and handle game state
         boolean gameActive = true;
         while (gameActive) {
+            if (!anyClientConnected()) {
+                System.out.println("Not all clients connected, ending match early");
+                gameActive = false;
+                break;
+            }
             // Process any queued moves (if using the queue approach)
             while (!moves.isEmpty()) {
                 PlayerMove move = moves.poll();
@@ -138,9 +143,24 @@ public class Server {
                     }
                 }
             }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                gameActive = false;
+            }
         }
         // Clean up
         matchCleanup();
+    }
+
+    private static boolean anyClientConnected() {
+        for (ClientHandler client : clients.values()) {
+            if (!client.socket.isClosed()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void matchCleanup() {
