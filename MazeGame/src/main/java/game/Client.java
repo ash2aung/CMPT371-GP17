@@ -6,9 +6,9 @@ import java.net.*;
 public class Client {
     private static final int SERVER_PORT = 42042; // Random number, can be changed if needed
     private static final String VALID_AUTH = "me key mause"; // just an arbitrary string
-    // TODO: What's happening with this? Send during first connection?
     private static final String SERVER_IP = "44.252.10.0"; // AWS VPS IP
 
+    private static Socket socket;
     private static OutputStream os;
     private static InputStream is;
     private static PrintWriter out;
@@ -233,7 +233,7 @@ public class Client {
     }
 
     public Maze setupConnection() throws IOException {
-        Socket socket = null;
+        socket = null;
         try {
             // Set up I/O streams
             socket = new Socket(SERVER_IP, SERVER_PORT);
@@ -273,5 +273,9 @@ public class Client {
         sendThread.start();
 
         return maze;
+    }
+
+    public Socket getSocket() {
+        return socket;
     }
 }

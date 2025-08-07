@@ -1,5 +1,8 @@
 package game;
 
+import java.io.IOException;
+import java.net.Socket;
+
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -30,7 +33,6 @@ public class UI extends Application {
     // Maze instance
     private Maze maze;
 
-
     @Override
     public void start(Stage primaryStage) {
         // Menu Screen
@@ -40,23 +42,35 @@ public class UI extends Application {
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
         Scene menuScene = new Scene(menuLayout, 400, 300);
-       try {
-           maze = client.setupConnection();
-       } catch (Exception e) {
-           e.printStackTrace();
-       }
+        try {
+            maze = client.setupConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Socket socket = client.getSocket();
+        // add shutdown hook for properly closing socket when closing program
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (socket != null && !socket.isClosed()) {
+                    System.out.println("Shutdown hook: Closing socket...");
+                    socket.close(); // Gracefully close the socket
+                }
+            } catch (IOException e) {
+                System.err.println("Error closing socket: " + e.getMessage());
+            }
+        }));
 
         // Create the Maze object (generates the 2D array)
-        //  maze = new Maze();
-        //  maze.placeCheeseRandomly();
+        // maze = new Maze();
+        // maze.placeCheeseRandomly();
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = loadImage("1-1.png");
-        imgWall   = loadImage("wall_placeholder.png");
-        imgFloor  = loadImage("floor_placeholder.png");
+        imgWall = loadImage("wall_placeholder.png");
+        imgFloor = loadImage("floor_placeholder.png");
         imgCheese = loadImage("Cheese.png");
         imgDark = loadImage("dark_placeholder.png");
-
 
         // Get maze size from Maze class
         MazeObject[][] grid = maze.getMaze();
@@ -88,16 +102,15 @@ public class UI extends Application {
             drawBoard(gc);
         });
 
-//        primaryStage.setScene(scene);
-//        primaryStage.setTitle("Maze Game");
-//        primaryStage.show();
-
+        // primaryStage.setScene(scene);
+        // primaryStage.setTitle("Maze Game");
+        // primaryStage.show();
 
         // Button actions
         startButton.setOnAction(e -> {
             primaryStage.setScene(gameScene);
-            drawBoard(gc);  // Draw initial board when starting
-            canvas.requestFocus();           // Make sure key events go to canvas
+            drawBoard(gc); // Draw initial board when starting
+            canvas.requestFocus(); // Make sure key events go to canvas
         });
 
         howToPlayButton.setOnAction(e -> {
@@ -137,7 +150,6 @@ public class UI extends Application {
         int cheeseCol = cheese.getCol();
         drawImage(gc, imgCheese, cheeseRow, cheeseCol);
 
-
         // Player is also always drawn
         for (Player p : maze.getPlayers()) {
             if (p != null) {
@@ -154,17 +166,14 @@ public class UI extends Application {
 
     // Custom size
     private void drawImage(GraphicsContext gc, Image img, int row, int col,
-                           double width, double height, double yOffset) {
+            double width, double height, double yOffset) {
 
         gc.drawImage(img, col * TILE_SIZE, row * TILE_SIZE + yOffset, width, height);
     }
 
-
     private Image loadImage(String filename) {
         return new Image(getClass().getResourceAsStream("/game/" + filename));
     }
-
-
 
     public static void main(String[] args) {
         launch(args);

@@ -156,7 +156,7 @@ public class Server {
     private static boolean anyClientConnected() {
         for (ClientHandler client : clients.values()) {
             if (client.socket.isClosed()) {
-                continue; // This client is definitely disconnected
+                continue; // This client is disconnected
             }
 
             // Test if the connection is actually alive with a ping
@@ -469,7 +469,7 @@ public class Server {
         public void handleMessages() throws Exception {
             byte[] input = new byte[MOVEPACKETSIZE];
             try {
-                while (true) {
+                while (!socket.isClosed()) {
                     // Receive move packet from client
                     int bytesRead = 0;
                     while (bytesRead < MOVEPACKETSIZE) {
