@@ -13,18 +13,19 @@ public class Client {
     private static InputStream is;
     private static PrintWriter out;
 
+    private static final int MAZESIZE = 20; // TODO: bad naming
     private static final int sendMovePacketSize = 3;
-    private static final int receiveMazePacketSize = 32 * 32 * 4 / 8;
+    private static final int receiveMazePacketSize = MAZESIZE * MAZESIZE * 4 / 8;
     private static final int receiveOtherPacketSize = 4;
     private static int userID = -1;
 
-    private static final int MAZE_SIZE = 32 * 32;
+    private static final int MAZE_SIZE = MAZESIZE * MAZESIZE;
 
     private byte[] buildPacket(int row, int col) {
         byte[] packet = new byte[sendMovePacketSize];
         byte moveToken = 0b010; // bit encoding for token "MOVE"
 
-        // Assuming row and col will be 5b each => maze is 32x32
+        // Assuming row and col will be 5b each => maze is 20x20
         packet[0] = (byte) (((moveToken << 5) & 0b11100000) | ((userID << 3) & 0b00011000) | ((row >> 2) & 0b00000111));
         packet[1] = (byte) (((row << 6) & 0b11000000) | ((col << 1) & 0b00111110));
         return packet;
@@ -169,8 +170,8 @@ public class Client {
             }
 
             // Set current coords
-            int row = i / 32;
-            int col = i % 32;
+            int row = i / MAZESIZE;
+            int col = i % MAZESIZE;
 
             switch ((int) tileDescription) {
                 case 0b0000: {
@@ -204,8 +205,9 @@ public class Client {
                 }
                 case 0b0110: {
                     // Cheese
-                    maze.getMaze()[row][col] = new Cheese(row, col); // TODO: Currently overriding decorations on this
-                                                                     // tile
+                    // TODO: Currently overriding decorations on this
+                    // tile
+                    maze.placeCheeseAt(row, col);
                     break;
                 }
                 case 0b0111: // Player 1
