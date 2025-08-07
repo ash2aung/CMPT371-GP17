@@ -12,7 +12,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class UI extends Application {
+public class UITest extends Application {
 
     // Tile size in pixels
     private static final int TILE_SIZE = 32;
@@ -40,15 +40,15 @@ public class UI extends Application {
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
         Scene menuScene = new Scene(menuLayout, 400, 300);
-//        try {
-//            maze = client.setupConnection();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            maze = client.setupConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Create the Maze object (generates the 2D array)
-         maze = new Maze();
-         maze.placeCheeseRandomly();
+        // maze = new Maze();
+        // maze.placeCheeseRandomly();
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = loadImage("1-1.png");
