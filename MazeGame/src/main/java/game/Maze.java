@@ -12,7 +12,7 @@ public class Maze {
     private Cheese cheese;
 
     // This is the id of the game player/client/user. So this is you.
-    // It will be distributed by the server at the start of thegame
+    // It will be distributed by the server at the start of the game
     private int userId = 0;
 
 
@@ -20,12 +20,15 @@ public class Maze {
     public Maze() {
         // Create board
         maze = new MazeBuilder(NUM_OF_ROWS, NUM_OF_COLUMNS).getMaze();
+        revealBorders();
 
         // Add players to board
         addPlayerToBoard(0, 1, 1);  // top left
         addPlayerToBoard(1, 1, NUM_OF_COLUMNS - 2); // top right
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1);     // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
+
+        removeWallsAroundPlayers();
 
 
     }
@@ -173,7 +176,7 @@ public class Maze {
     }
 
     private void cheeseFound(int playerId, int row, int col) {
-        placeCheeseRandomly(); // temporary method for game testing. REMOVE IT AFTERWARDS
+        placeCheeseRandomly(); // temporary method for game testing. REMOVE IT AFTERWARD
 
         if (playerId == userId) {
             notifyClientThatUserCollectedCheese();
@@ -228,9 +231,9 @@ public class Maze {
     /**
      * This method is called when a move is validated. It will move select player
      * to target row and col
-     * @param playerId
-     * @param row
-     * @param col
+     * @param playerId ID of the player we want to move
+     * @param row Target row of the intended move
+     * @param col Target col of the intended move
      */
     private void updatePlayerPosition(int playerId, int row, int col) {
         players[playerId].setRow(row);
@@ -274,9 +277,9 @@ public class Maze {
     /**
      * Gets the player, given row and col. Use ONLY if player is confirmed to be in that position
      * Otherwise, it'll break the code
-     * @param row
-     * @param col
-     * @return
+     * @param row Target row to find Player
+     * @param col Target col to find player
+     * @return A player object at row, col
      */
     private Player getPlayerWithRowCol(int row, int col) {
         for (int i = 0; i < 4; i++) {
@@ -297,6 +300,50 @@ public class Maze {
             }
         }
         printMaze();
+    }
+
+    private void revealBorders() {
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                if (row == 0 || row == NUM_OF_ROWS - 1) {
+                    maze[row][col].setVisible();
+                } else if (col == 0 || col == NUM_OF_COLUMNS - 1) {
+                    maze[row][col].setVisible();
+                }
+            }
+        }
+    }
+
+    private void removeWallsAroundPlayers() {
+        int row, col;
+        // player 0, starting at top left corner
+        row = players[0].getRow();
+        col = players[0].getCol();
+        maze[row][col + 1] = new MazeObject(true, true);    // right
+        maze[row + 1][col] = new MazeObject(true, true);    // bottom
+        maze[row + 1][col + 1] = new MazeObject(true, true); // bottom right
+
+        // player 1, starting at top right corner
+        row = players[1].getRow();
+        col = players[1].getCol();
+        maze[row][col - 1] = new MazeObject(true, true);    // left
+        maze[row + 1][col] = new MazeObject(true, true);    // bottom
+        maze[row + 1][col - 1] = new MazeObject(true, true); // bottom left
+
+        // player 2, starting at bottom left corner
+        row = players[2].getRow();
+        col = players[2].getCol();
+        maze[row - 1][col] = new MazeObject(true, true);    // top
+        maze[row][col + 1] = new MazeObject(true, true);    // right
+        maze[row - 1][col + 1] = new MazeObject(true, true); //top right
+
+        // player 3, starting at bottom right corner
+        row = players[3].getRow();
+        col = players[3].getCol();
+        maze[row - 1][col] = new MazeObject(true, true);    // top
+        maze[row][col - 1] = new MazeObject(true, true);    // left
+        maze[row - 1][col - 1] = new MazeObject(true, true); // top left
+
     }
 
 
