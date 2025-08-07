@@ -19,7 +19,7 @@ public class Client {
     private static final int sendMovePacketSize = 3;
     private static final int receiveMazePacketSize = MAZE_SIDE * MAZE_SIDE * 4 / 8;
     private static final int receiveOtherPacketSize = 4;
-    private static int userID = -1;
+    private static int userId = -1;
 
     private static final int MAZE_SIZE = MAZE_SIDE * MAZE_SIDE;
 
@@ -28,7 +28,7 @@ public class Client {
         byte moveToken = 0b010; // bit encoding for token "MOVE"
 
         // Assuming row and col will be 5b each => maze is 20x20
-        packet[0] = (byte) (((moveToken << 5) & 0b11100000) | ((userID << 3) & 0b00011000) | ((row >> 2) & 0b00000111));
+        packet[0] = (byte) (((moveToken << 5) & 0b11100000) | ((userId << 3) & 0b00011000) | ((row >> 2) & 0b00000111));
         packet[1] = (byte) (((row << 6) & 0b11000000) | ((col << 1) & 0b00111110));
         return packet;
     }
@@ -144,7 +144,7 @@ public class Client {
             byte[] userid = new byte[1];
             is.read(userid, 0, 1);
             System.out.println("USER ID: " + userid[0] + "\n");
-            userID = userid[0];
+            userId = userid[0];
         } catch (IOException readingException) {
             System.out.println("UNABLE TO GET PLAYER ID FROM SERVER\n");
             return;
@@ -281,6 +281,7 @@ public class Client {
 
         // Process Maze
         Maze maze = createMaze(mazeDescription);
+        maze.setUserId(userId);
         System.out.println("Created maze from description from Server");
         maze.printMaze();
 
