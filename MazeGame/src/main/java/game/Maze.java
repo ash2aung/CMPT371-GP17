@@ -402,7 +402,6 @@ public class Maze {
     }
 
     public void placeCheeseAt(int row, int col) {
-        maze[row][col] = new MazeObject(true, true);
         cheese = new Cheese(col, row);
     }
 
