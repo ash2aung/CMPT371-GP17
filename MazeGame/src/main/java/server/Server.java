@@ -480,10 +480,11 @@ public class Server {
                         }
                         bytesRead += result;
                     }
+                    System.out.println("Received move from player " + playerId);
 
                     // Process into a PlayerMove object
                     PlayerMove move = processMovePacket(input);
-
+                    System.out.println("Decoded into player move from player id: " + move.getPlayerId() + ", row: " + move.getRow() + ", col: " + move.getCol());
                     // Add to the BlockingQueue
                     moves.add(move);
                 }
