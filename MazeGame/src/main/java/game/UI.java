@@ -64,16 +64,39 @@ public class UI extends Application {
         menuLayout.setBackground(new Background(bgImage));
 
         menuScene = new Scene(menuLayout, 32 * 20, 32 * 20);
-//        try {
-//            maze = client.setupConnection();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+
+        try {
+            maze = client.setupConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Cleanup for when the window close
+        primaryStage.setOnCloseRequest(event -> {
+            System.out.println("Application closing, cleaning up connections...");
+            client.cleanup();
+
+            // Force exit if cleanup takes too long
+            new Thread(() -> {
+                try {
+                    Thread.sleep(2000); // Wait 2 seconds for graceful cleanup
+                    System.exit(0); // Force exit if still running
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        });
+
+        // Keep the shutdown hook as backup for JVM shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("JVM shutting down, cleaning up...");
+            client.cleanup();
+        }));
 
         // Create the Maze object (generates the 2D array)
-         maze = new Maze();
-         maze.placeCheeseRandomly();
-         maze.revealEntireMaze();
+         // maze = new Maze();
+         // maze.placeCheeseRandomly();
+         // maze.revealEntireMaze();
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = loadImage("player_sprites/1-1.png");
