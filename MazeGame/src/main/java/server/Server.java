@@ -307,15 +307,20 @@ public class Server {
                 return 'c';
 
             } else if (!temp.isPassable()) {
-                // Player collision (can't be a wall because client checks for that)
-                // Play bonk sound?
+                // TODO: This can never be reached as client-side checks if the player is attempting to walk into a wall
+                //  Remove this?
 
                 System.out.println("Player at " + move.getRow() + ", " + move.getCol());
                 return 'i';
             } else {
-                // Player successfully moved
+                System.out.println("Player has not collected cheese... ");
+                if (maze.checkForPlayer(move.getPlayerId(), move.getRow(), move.getCol())) {
+                    // Player collision!
+                    System.out.println("And player collision detected!\n");
+                    return 'i';
+                }
 
-                // Update player position internally
+                System.out.println("But player has made a valid move!\n");
                 maze.movePlayer(move.getPlayerId(), move.getRow(), move.getCol());
 
                 return 'v';
