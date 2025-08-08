@@ -131,7 +131,7 @@ public class UI extends Application implements ClientEventListener {
                 case S -> maze.moveWithUserInput('s', client);
                 case D -> maze.moveWithUserInput('d', client);
                 default -> {
-                    showGameEndScreen(1);
+                    // showGameEndScreen(1);
                     // ignore other keys
                 }
             }
