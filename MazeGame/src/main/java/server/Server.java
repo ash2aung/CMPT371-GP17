@@ -293,7 +293,8 @@ public class Server {
 
         try {
             // Check the place the player's trying to move to
-            if (temp instanceof Cheese) {
+            boolean isCheese = move.getRow() == maze.getCheese().getRow() && move.getCol() == maze.getCheese().getCol();
+            if (isCheese) {
                 currentPlayer.addCheeseCount();
                 if (currentPlayer.getCheeseCount() == CHEESE_TO_WIN) {
                     return 'w';
@@ -341,7 +342,7 @@ public class Server {
 
     private static void broadcastCheeseCollection(int playerId, int playerRow, int playerCol, int newCheeseRow,
             int newCheeseCol) {
-                System.out.println("Broadcasting new Cheese");
+        System.out.println("Broadcasting new Cheese");
         byte[] cheesePacket = new byte[4];
         // Token: 0b011 (CHEESE_COLLECTED)
         cheesePacket[0] = (byte) (0b01100000 | ((playerId & 0b11) << 3) | ((playerRow >> 2) & 0b111));
