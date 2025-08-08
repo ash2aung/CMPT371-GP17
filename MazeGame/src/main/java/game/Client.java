@@ -249,6 +249,7 @@ public class Client {
                     // Cheese
                     // TODO: Currently overriding decorations on this
                     // tile
+                    // TODO: Verify the following line is supposed to be here
                     maze.getMaze()[row][col].passable = true;
                     maze.placeCheeseAt(row, col);
                     break;
