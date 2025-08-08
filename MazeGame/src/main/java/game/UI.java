@@ -11,13 +11,11 @@ import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UI extends Application {
-
+public class UI extends Application implements ClientEventListener {
     // Tile size in pixels
     private static final int TILE_SIZE = 32;
     private static final double PLAYER_HEIGHT = 32 * 1.5;
@@ -40,12 +38,18 @@ public class UI extends Application {
     // Maze instance
     private Maze maze;
 
+    // UI Components
+    private GraphicsContext gc;
+
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         // Menu Screen
         Button startButton = new Button("Start Game");
         Button howToPlayButton = new Button("How To Play");
+
+        // Event Listener
+        client.setClientEventListener(this);
 
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
@@ -112,7 +116,7 @@ public class UI extends Application {
 
         // Canvas size based on maze dimensions
         Canvas canvas = new Canvas(cols * TILE_SIZE, rows * TILE_SIZE);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc = canvas.getGraphicsContext2D();
 
         // Draw the board once
         drawBoard(gc);
@@ -159,6 +163,20 @@ public class UI extends Application {
         primaryStage.setScene(menuScene);
         primaryStage.setTitle("Maze Game");
         primaryStage.show();
+    }
+
+    @Override
+    public void onMoveReceived(int playerID, int row, int col) {
+        System.out.println("UI: Move received for player " + playerID);
+        maze.movePlayer(playerID, row, col);
+        drawBoard(gc);
+    }
+
+    @Override
+    public void onCheeseReceived(int row, int col) {
+        System.out.println("UI: Cheese received");
+        maze.placeCheeseAt(row, col);
+        drawBoard(gc);
     }
 
     private void drawBoard(GraphicsContext gc) {

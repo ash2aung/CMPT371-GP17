@@ -154,6 +154,9 @@ public class Maze {
     }
 
     private boolean checkForCheese(int row, int col) {
+        if (cheese == null) {
+            return false;
+        }
         return (row == cheese.getRow() && col == cheese.getCol());
     }
 
@@ -203,7 +206,7 @@ public class Maze {
     public void movePlayer(int playerId, int row, int col) {
         updatePlayerPosition(playerId, row, col);
         updateVisibilityAroundPlayer(playerId);
-        notifyClientAboutUserMove();
+        notifyClientAboutUserMove(); // TODO: DELETE ME
         printMaze();
     }
 
