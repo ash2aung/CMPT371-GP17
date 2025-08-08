@@ -13,7 +13,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 // public class UI extends Application implements ClientEventListener {
-public class UI extends Application { // TODO: Comment me out
+public class UI extends Application implements ClientEventListener { // TODO: Comment me out
     // Tile size in pixels
     private static final int TILE_SIZE = 32;
     private static final double PLAYER_HEIGHT = 32 * 1.5;
@@ -37,7 +37,7 @@ public class UI extends Application { // TODO: Comment me out
         Button howToPlayButton = new Button("How To Play");
 
         // Event Listener
-        // client.setClientEventListener(this);
+        client.setClientEventListener(this);
 
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
@@ -136,15 +136,15 @@ public class UI extends Application { // TODO: Comment me out
         primaryStage.show();
     }
 
-    // @Override
-    // public void onMoveReceived(int playerID, int row, int col) {
-    //     maze.movePlayer(playerID, row, col);
-    // }
+    @Override
+    public void onMoveReceived(int playerID, int row, int col) {
+        maze.movePlayer(playerID, row, col);
+    }
 
-    // @Override
-    // public void onCheeseReceived(int row, int col) {
-    //     maze.placeCheeseAt(row, col);        
-    // }
+    @Override
+    public void onCheeseReceived(int row, int col) {
+        maze.placeCheeseAt(row, col);
+    }
 
     private void drawBoard(GraphicsContext gc) {
         MazeObject[][] grid = maze.getMaze();
