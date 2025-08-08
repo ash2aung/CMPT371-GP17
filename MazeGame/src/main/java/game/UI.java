@@ -1,6 +1,7 @@
 package game;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -32,12 +33,17 @@ public class UI extends Application {
     private final Map<String, Image> imageCache = new HashMap<>();
     private Client client = new Client();
 
+    // Scenes
+    private Scene menuScene;
+    private Stage primaryStage;
+
     // Maze instance
     private Maze maze;
 
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         // Menu Screen
         Button startButton = new Button("Start Game");
         Button howToPlayButton = new Button("How To Play");
@@ -58,7 +64,7 @@ public class UI extends Application {
 
         menuLayout.setBackground(new Background(bgImage));
 
-        Scene menuScene = new Scene(menuLayout, 32 * 20, 32 * 20);
+        menuScene = new Scene(menuLayout, 32 * 20, 32 * 20);
 //        try {
 //            maze = client.setupConnection();
 //        } catch (Exception e) {
@@ -101,6 +107,7 @@ public class UI extends Application {
                 case S -> maze.moveWithUserInput('s');
                 case D -> maze.moveWithUserInput('d');
                 default -> {
+                    testEndGameScene(1);
                     // ignore other keys
                 }
             }
@@ -196,6 +203,39 @@ public class UI extends Application {
             return img;
         }
     }
+
+    private Scene buildEndGameScene(int playerId, Stage primaryStage, Scene menuScene) {
+        // Determine which image to use based on who won
+        String winnerImageFile = "Win" + (playerId + 1) + ".png";
+        Image winnerImage = loadImage(winnerImageFile);
+
+        BackgroundImage bgImage = new BackgroundImage(
+                winnerImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, false)
+        );
+
+        // Back to main menu button
+        Button backToMenuButton = new Button("Back to Main Menu");
+        backToMenuButton.setOnAction(e -> {
+            primaryStage.setScene(menuScene);
+        });
+
+        VBox endLayout = new VBox(20, backToMenuButton);
+        endLayout.setAlignment(Pos.BOTTOM_CENTER);
+        endLayout.setBackground(new Background(bgImage));
+        endLayout.setPadding(new Insets(0, 0, 40, 0));
+
+        return new Scene(endLayout, 32 * 20, 32 * 20);
+    }
+
+    private void testEndGameScene(int winnerId) {
+        Scene endGameScene = buildEndGameScene(winnerId, primaryStage, menuScene);
+        primaryStage.setScene(endGameScene);
+    }
+
 
 
 
