@@ -106,7 +106,7 @@ public class Client {
             case 0b100: {
                 // A player won
                 int playerID = ((input[0] >> 3) & 0b00000011);
-                // TODO: displayGameOverScreen(playerID);
+                notifyUIWin(playerID);
                 return false;
             }
             case 0b111: {
