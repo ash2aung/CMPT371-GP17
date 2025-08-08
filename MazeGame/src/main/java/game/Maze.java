@@ -202,7 +202,7 @@ public class Maze {
     public void movePlayer(int playerId, int row, int col) {
         updatePlayerPosition(playerId, row, col);
         updateVisibilityAroundPlayer(playerId);
-        notifyClientAboutUserMove();
+        notifyClientAboutUserMove(); // TODO: DELETE ME
         printMaze();
     }
 

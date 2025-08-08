@@ -23,6 +23,24 @@ public class Client {
 
     private static final int MAZE_SIZE = MAZE_SIDE * MAZE_SIDE;
 
+    private ClientEventListener listener;
+
+    public void setClientEventListener(ClientEventListener listener) {
+        this.listener = listener;
+    }
+
+    private void notifyUIMove(int playerID, int row, int col) {
+        if (listener != null) {
+            listener.onMoveReceived(playerID, row, col);
+        }
+    }
+
+    private void notifyUICheese(int row, int col) {
+        if (listener != null) {
+            listener.onCheeseReceived(row, col);
+        }
+    }
+
     private byte[] buildPacket(int row, int col) {
         byte[] packet = new byte[sendMovePacketSize];
         byte moveToken = 0b010; // bit encoding for token "MOVE"
@@ -57,10 +75,7 @@ public class Client {
                 int playerID = ((input[0] >> 3) & 0b00000011);
                 int newRow = ((input[0] & 0b00000111) << 2) | ((input[1] >> 6) & 0b00000011);
                 int newCol = ((input[1] >> 1) & 0b00011111);
-                // moveUserFromID(playerID, newRow, newCol); CHECK IF ID = USER && THEY HAVEN'T
-                // MOVED => server accepts their move
-                // updateVisibilityAroundPlayer();
-                // TODO: Talk to jack about updateVidibility being private and how to call it
+                notifyUIMove(playerID, newRow, newCol);
                 break;
             }
             case 0b011: {
@@ -70,6 +85,9 @@ public class Client {
                 int newPlayerCol = ((input[1] >> 1) & 0b00011111);
                 int newCheeseRow = ((input[1] & 0b00000001) << 4) | ((input[2] >> 4) & 0b00001111);
                 int newCheeseCol = ((input[2] & 0b00001111) << 1) | ((input[3] >> 7) & 0b00000001);
+                notifyUIMove(playerID, newPlayerRow, newPlayerCol);
+                notifyUICheese(newCheeseRow, newCheeseCol);
+                
                 // moveUserFromID(playerID, newPlayerRow, newPlayerCol); CHECK IF ID = USER &&
                 // THEY HAVEN'T MOVED => server accepts their move
                 // updateVisibilityAroundPlayer();
@@ -79,7 +97,7 @@ public class Client {
             case 0b100: {
                 // A player won
                 int playerID = ((input[0] >> 3) & 0b00000011);
-                // displayGameOverScreen(playerID);
+                // TODO: displayGameOverScreen(playerID);
                 return false;
             }
             case 0b111: {
