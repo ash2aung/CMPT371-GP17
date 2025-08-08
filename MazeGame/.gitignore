@@ -5,6 +5,7 @@ target/classes/server/Server.class
 !**/src/main/**/target/
 !**/src/test/**/target/
 *.class
+*.log 
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
