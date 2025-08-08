@@ -34,6 +34,7 @@ public class Client {
     }
 
     public void sendInputToServer(int newRow, int newCol) {
+        System.out.println("Sending input to server");
         byte[] packet = buildPacket(newRow, newCol);
 
         try {

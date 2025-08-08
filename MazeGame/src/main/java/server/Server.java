@@ -85,6 +85,7 @@ public class Server {
         // Start the game
         // Place a cheese
         cheeseCoords = maze.placeCheeseRandomly();
+        maze.printMaze();
         // Broadcast maze to clients
         broadcastMazeToAllClients();
 
@@ -197,6 +198,7 @@ public class Server {
     private static void matchInit() {
         // Create new random maze
         maze = new Maze();
+        maze.printMaze();
         // Reset move queue
         moves = new LinkedBlockingQueue<>();
         // Reset available player Ids
@@ -484,7 +486,8 @@ public class Server {
 
                     // Process into a PlayerMove object
                     PlayerMove move = processMovePacket(input);
-                    System.out.println("Decoded into player move from player id: " + move.getPlayerId() + ", row: " + move.getRow() + ", col: " + move.getCol());
+                    System.out.println("Decoded into player move from player id: " + move.getPlayerId() + ", row: "
+                            + move.getRow() + ", col: " + move.getCol());
                     // Add to the BlockingQueue
                     moves.add(move);
                 }
