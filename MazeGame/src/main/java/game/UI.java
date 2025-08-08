@@ -99,10 +99,10 @@ public class UI extends Application implements ClientEventListener { // TODO: Co
 
         gameScene.setOnKeyPressed(event -> {
             switch (event.getCode()) {
-                case W -> maze.moveWithUserInput('w');
-                case A -> maze.moveWithUserInput('a');
-                case S -> maze.moveWithUserInput('s');
-                case D -> maze.moveWithUserInput('d');
+                case W -> maze.moveWithUserInput('w', client);
+                case A -> maze.moveWithUserInput('a', client);
+                case S -> maze.moveWithUserInput('s', client);
+                case D -> maze.moveWithUserInput('d', client);
                 default -> {
                     // ignore other keys
                 }

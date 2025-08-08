@@ -4,6 +4,7 @@ target/classes/server/Server.class
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+*.class
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

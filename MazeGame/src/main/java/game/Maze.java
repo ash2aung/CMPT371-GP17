@@ -418,4 +418,8 @@ public class Maze {
     public void notifyClientAboutUserMove() {
     }
 
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
 }
