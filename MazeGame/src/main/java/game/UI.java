@@ -21,7 +21,6 @@ public class UI extends Application implements ClientEventListener {
     private static final double PLAYER_HEIGHT = 32 * 1.5;
     private static final double PLAYER_HEIGHT_OFFSET = TILE_SIZE - PLAYER_HEIGHT;
 
-
     // Placeholder images
     private Image imgPlayer;
     private Image imgWall;
@@ -62,8 +61,7 @@ public class UI extends Application implements ClientEventListener {
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO,
-                        false, false, true, false)
-        );
+                        false, false, true, false));
 
         menuLayout.setBackground(new Background(bgImage));
 
@@ -98,14 +96,14 @@ public class UI extends Application implements ClientEventListener {
         }));
 
         // Create the Maze object (generates the 2D array)
-         // maze = new Maze();
-         // maze.placeCheeseRandomly();
-         // maze.revealEntireMaze();
+        // maze = new Maze();
+        // maze.placeCheeseRandomly();
+        // maze.revealEntireMaze();
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = loadImage("player_sprites/1-1.png");
-        imgWall   = loadImage("wall_placeholder.png");
-        imgFloor  = loadImage("Floor.png");
+        imgWall = loadImage("wall_placeholder.png");
+        imgFloor = loadImage("Floor.png");
         imgCheese = loadImage("Cheese.png");
         imgDark = loadImage("dark_placeholder.png");
 
@@ -256,8 +254,7 @@ public class UI extends Application implements ClientEventListener {
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
-                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, false)
-        );
+                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, false));
 
         // Back to main menu button
         Button backToMenuButton = new Button("Back to Main Menu");
@@ -277,10 +274,6 @@ public class UI extends Application implements ClientEventListener {
         Scene endGameScene = buildEndGameScene(winnerId, primaryStage, menuScene);
         primaryStage.setScene(endGameScene);
     }
-
-
-
-
 
     public static void main(String[] args) {
         launch(args);
