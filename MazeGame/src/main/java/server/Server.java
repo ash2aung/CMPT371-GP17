@@ -120,7 +120,7 @@ public class Server {
                         // i for invalid move
                         case ('i') -> {
                             // Still must send the player's old move to indicate they haven't moved
-                            broadcastPlayerMove(
+                            broadcastInvalidMove(
                                     new PlayerMove(move.getPlayerId(), maze.getPlayers()[move.getPlayerId()].getRow(),
                                             maze.getPlayers()[move.getPlayerId()].getCol()));
                         }
@@ -344,6 +344,21 @@ public class Server {
         movePacket[3] = 0; // Unused
 
         broadcast(movePacket, playerId);
+    }
+
+    private static void broadcastInvalidMove(PlayerMove move) {
+        int playerId = move.getPlayerId();
+        int row = move.getRow();
+        int col = move.getCol();
+
+        byte[] movePacket = new byte[4];
+            // Token: 0b010 (MOVE)
+        movePacket[0] = (byte) (0b01000000 | ((playerId & 0b11) << 3) | ((row >> 2) & 0b111));
+        movePacket[1] = (byte) (((row & 0b11) << 6) | ((col & 0b11111) << 1));
+        movePacket[2] = 0; // Unused
+        movePacket[3] = 0; // Unused
+
+        broadcast(movePacket, -1);
     }
 
     private static void broadcastCheeseCollection(int playerId, int playerRow, int playerCol, int newCheeseRow,
