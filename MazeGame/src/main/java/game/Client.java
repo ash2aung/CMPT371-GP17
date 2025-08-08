@@ -12,12 +12,14 @@ public class Client {
     private static OutputStream os;
     private static InputStream is;
     private static PrintWriter out;
+    private Thread receiveThread;
+    private volatile boolean isConnected = false;
 
     private static final int MAZE_SIDE = 20;
     private static final int sendMovePacketSize = 3;
     private static final int receiveMazePacketSize = MAZE_SIDE * MAZE_SIDE * 4 / 8;
     private static final int receiveOtherPacketSize = 4;
-    private static int userID = -1;
+    private static int userId = -1;
 
     private static final int MAZE_SIZE = MAZE_SIDE * MAZE_SIDE;
 
@@ -26,12 +28,13 @@ public class Client {
         byte moveToken = 0b010; // bit encoding for token "MOVE"
 
         // Assuming row and col will be 5b each => maze is 20x20
-        packet[0] = (byte) (((moveToken << 5) & 0b11100000) | ((userID << 3) & 0b00011000) | ((row >> 2) & 0b00000111));
+        packet[0] = (byte) (((moveToken << 5) & 0b11100000) | ((userId << 3) & 0b00011000) | ((row >> 2) & 0b00000111));
         packet[1] = (byte) (((row << 6) & 0b11000000) | ((col << 1) & 0b00111110));
         return packet;
     }
 
     public void sendInputToServer(int newRow, int newCol) {
+        System.out.println("Sending input to server");
         byte[] packet = buildPacket(newRow, newCol);
 
         try {
@@ -95,27 +98,40 @@ public class Client {
         return () -> {
             try {
                 byte[] input = new byte[receiveOtherPacketSize];
-                boolean continueLoop = true;
-                while (continueLoop) {
+
+                while (isConnected && !Thread.currentThread().isInterrupted()) {
                     int bytesRead = 0;
 
-                    while (bytesRead < receiveOtherPacketSize) {
+                    while (bytesRead < receiveOtherPacketSize && isConnected) {
                         int result = is.read(input, bytesRead, receiveOtherPacketSize - bytesRead);
                         if (result == -1) {
-                            System.out.println("Issue reading other packets from server");
+                            System.out.println("Server connection closed");
+                            isConnected = false;
                             return;
                         }
                         bytesRead += result;
                     }
 
-                    continueLoop = processOtherServerPacket(input);
+                    if (isConnected) {
+                        boolean continueLoop = processOtherServerPacket(input);
+                        if (!continueLoop) {
+                            isConnected = false;
+                        }
+                    }
                 }
 
-                closeConnections();
-                socket.close();
             } catch (IOException receiveException) {
-                System.out.println("Error Receiving Packets\n");
-                receiveException.printStackTrace();
+                if (isConnected) { // Only log if we weren't intentionally disconnecting
+                    System.out.println("Error Receiving Packets: " + receiveException.getMessage());
+                }
+            } finally {
+                try {
+                    if (socket != null && !socket.isClosed()) {
+                        socket.close();
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error closing socket in receive thread: " + e.getMessage());
+                }
             }
         };
     }
@@ -129,7 +145,7 @@ public class Client {
             byte[] userid = new byte[1];
             is.read(userid, 0, 1);
             System.out.println("USER ID: " + userid[0] + "\n");
-            userID = userid[0];
+            userId = userid[0];
         } catch (IOException readingException) {
             System.out.println("UNABLE TO GET PLAYER ID FROM SERVER\n");
             return;
@@ -240,11 +256,11 @@ public class Client {
             os = socket.getOutputStream();
             out = new PrintWriter(os, true);
             is = socket.getInputStream();
+            isConnected = true;
         } catch (IOException socketException) {
             System.out.println("Issue in connecting\n");
             socketException.printStackTrace();
-            closeConnections();
-            socket.close();
+            cleanup();
             return null;
         }
 
@@ -266,25 +282,58 @@ public class Client {
 
         // Process Maze
         Maze maze = createMaze(mazeDescription);
+        maze.setUserId(userId);
         System.out.println("Created maze from description from Server");
         maze.printMaze();
 
-        Thread sendThread = new Thread(serverReceive(socket));
-        sendThread.start();
+        // Store reference to the thread so we can manage it
+        receiveThread = new Thread(serverReceive(socket));
+        receiveThread.setDaemon(true); // Make it a daemon thread
+        receiveThread.start();
 
         return maze;
     }
 
     public void cleanup() {
+        System.out.println("Starting client cleanup...");
+        isConnected = false; // Signal threads to stop
+
         try {
-            if (socket != null && (!socket.isClosed())) {
+            // Close streams first to unblock any reading operations
+            if (is != null) {
+                is.close();
+            }
+            if (os != null) {
+                os.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+
+            // Close socket
+            if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
-            os.close();
-            is.close();
-            out.close();
+
+            // Wait for receive thread to finish (with timeout)
+            if (receiveThread != null && receiveThread.isAlive()) {
+                receiveThread.interrupt();
+                try {
+                    receiveThread.join(1000); // Wait up to 1 second
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            System.out.println("Client cleanup completed");
+
         } catch (Exception e) {
+            System.err.println("Error during cleanup: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public boolean isConnected() {
+        return isConnected && socket != null && !socket.isClosed();
     }
 }
