@@ -41,6 +41,12 @@ public class Client {
         }
     }
 
+    private void notifyUIWin(int playerID) {
+        if (listener != null) {
+            listener.onPlayerWin(playerID);
+        }
+    }
+
     private byte[] buildPacket(int row, int col) {
         byte[] packet = new byte[sendMovePacketSize];
         byte moveToken = 0b010; // bit encoding for token "MOVE"

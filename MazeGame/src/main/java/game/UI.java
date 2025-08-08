@@ -179,6 +179,12 @@ public class UI extends Application implements ClientEventListener {
         drawBoard(gc);
     }
 
+    @Override
+    public void onPlayerWin(int playerID) {
+        System.out.println("UI: Player " + playerID + "'s win received!\n");
+        showGameEndScreen(playerID);
+    }
+
     private void drawBoard(GraphicsContext gc) {
         MazeObject[][] grid = maze.getMaze();
 
