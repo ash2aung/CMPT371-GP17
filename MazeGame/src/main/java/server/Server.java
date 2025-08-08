@@ -39,6 +39,8 @@ public class Server {
     private static int[] score = new int[4];
 
     public static void main(String args[]) throws IOException {
+        System.out.println("Welcome to Rat\n");
+        printRat();
         try {
             serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
             System.out.println("Server started on port: " + PORT);
