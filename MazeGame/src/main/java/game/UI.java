@@ -1,6 +1,7 @@
 package game;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -102,7 +103,7 @@ public class UI extends Application implements ClientEventListener {
 
         // Load images (make sure these are in src/main/resources/game/)
         imgPlayer = loadImage("player_sprites/1-1.png");
-        imgWall = loadImage("wall_placeholder.png");
+        imgWall = loadImage("wall_sprites/wall_placeholder.png");
         imgFloor = loadImage("Floor.png");
         imgCheese = loadImage("Cheese.png");
         imgDark = loadImage("dark_placeholder.png");
@@ -180,7 +181,9 @@ public class UI extends Application implements ClientEventListener {
     @Override
     public void onPlayerWin(int playerID) {
         System.out.println("UI: Player " + playerID + "'s win received!\n");
-        showGameEndScreen(playerID);
+        Platform.runLater(() -> {
+            showGameEndScreen(playerID);
+        });
     }
 
     private void drawBoard(GraphicsContext gc) {
