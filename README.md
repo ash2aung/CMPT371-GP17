@@ -17,3 +17,5 @@ Only 1 *objective item* is on the board at a time. As soon as it is collected by
 Each player can move as fast as they can type. Moving onto a cell occupied by an enemy will result in a stun until the enemy moves, and moving onto the 3rd *objective item* will result in a win for that player.
 ### Maze
 To begin, most of the map will be hidden as a space will only be shown if a player has been adjacent to it at some point during the current game. Unrevealed spaces will be displayed as black tiles. Regardless of whether a player has discovered the space an enemy or the Cheese is on, it will always be visible on the map. Additionally, the outer border of walls will always be shown. Each player can see where every other player is and has been.
+## How To Play
+Requires 4 concurrent players. Each must checkout the main branch, cd into the MazeGame directory, then run the following command: "mvn javafx:run". Only when all 4 players have connected to the server, and have received confirmation via their User ID in the local terminal, will the game begin.
