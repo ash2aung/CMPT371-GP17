@@ -255,7 +255,7 @@ public class Server {
             waitUntilNoAvailableIds();
 
             clientHandler.handleMessages();
-        } catch (Exception e) {
+        } catch (IOException e) {
             // Add the assigned player id back into the list of available ones
             if (playerId != -1) {
                 try {
@@ -264,6 +264,8 @@ public class Server {
                     e2.printStackTrace();
                 }
             }
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -474,7 +476,7 @@ public class Server {
             this.out = out;
         }
 
-        public void handleMessages() throws Exception {
+        public void handleMessages() throws IOException {
             byte[] input = new byte[MOVEPACKETSIZE];
             try {
                 while (!socket.isClosed()) {
