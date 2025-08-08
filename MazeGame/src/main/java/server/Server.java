@@ -93,13 +93,13 @@ public class Server {
         System.out.println("Match start...");
         boolean gameActive = true;
         while (gameActive) {
-            if (!anyClientConnected()) {
+            if (gameActive && !anyClientConnected()) {
                 System.out.println("All clients disconnected, ending match early");
                 gameActive = false;
                 break;
             }
             // Process any queued moves (if using the queue approach)
-            while (!moves.isEmpty()) {
+            while (gameActive && !moves.isEmpty()) {
                 PlayerMove move = moves.poll();
                 if (move != null) {
                     System.out.println("Processing move from player " + move.getPlayerId());
@@ -137,6 +137,7 @@ public class Server {
                         case ('w') -> {
                             broadcastGameWin(move.getPlayerId());
                             gameActive = false; // Game stops
+                            break;
                         }
 
                         default -> {
@@ -355,6 +356,7 @@ public class Server {
     }
 
     private static void broadcastGameWin(int playerId) {
+        System.out.println("Broadcasting game win");
         byte[] winPacket = new byte[4];
         // Token: 0b100 (GAME_WIN)
         winPacket[0] = (byte) (0b10000000 | ((playerId & 0b11) << 3));
@@ -496,6 +498,15 @@ public class Server {
                 }
             } catch (IOException e) {
                 System.err.println("Client " + playerId + " disconnected: " + e.getMessage());
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                }
             }
         }
 
