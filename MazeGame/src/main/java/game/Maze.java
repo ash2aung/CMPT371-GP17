@@ -25,6 +25,7 @@ public class Maze {
         addPlayerToBoard(2, NUM_OF_ROWS - 2, 1); // bottom left
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
         removeWallsAroundPlayers();
+        loadWallGraphics();
 
     }
 
@@ -345,6 +346,203 @@ public class Maze {
         maze[row - 1][col - 1] = new MazeObject(true, true); // top left
 
     }
+
+    private void loadWallGraphics() {
+        for (int row = 1; row < NUM_OF_ROWS - 1; row++) {
+            for (int col = 1; col < NUM_OF_COLUMNS - 1; col++) {
+                MazeObject obj = maze[row][col];
+
+                // If not a wall, then skip
+                if (obj.isPassable()) {
+                    continue;
+                }
+
+                boolean top = !maze[row - 1][col].isPassable();
+                boolean bot = !maze[row + 1][col].isPassable();
+                boolean left = !maze[row][col - 1].isPassable();
+                boolean right = !maze[row][col + 1].isPassable();
+
+                // T-shaped walls
+                if (top && left && right) {
+                    obj.setImageFilePath("T-1.png");
+                } else if (top && left && bot) {
+                    obj.setImageFilePath("T-2.png");
+                } else if (left && right && bot) {
+                    obj.setImageFilePath("T-3.png");
+                } else if (top && right && bot) {
+                    obj.setImageFilePath("T-4.png");
+                }
+
+                // L-shaped walls
+                else if (top && right) {
+                    obj.setImageFilePath("L-1.png");
+                } else if (top && left) {
+                    obj.setImageFilePath("L-2.png");
+                } else if (left && bot) {
+                    obj.setImageFilePath("L-3.png");
+                } else if (bot && right) {
+                    obj.setImageFilePath("L-4.png");
+                }
+
+                // Horizontal and Vertical
+                else if (left && right) {
+                    obj.setImageFilePath("hori.png");
+                } else if (top && bot){
+                    obj.setImageFilePath("verti.png");
+                } else if (left || right) {
+                    obj.setImageFilePath("hori.png");
+                } else if (top || bot) {
+                    obj.setImageFilePath("verti.png");
+                } else {
+                    obj.setImageFilePath("Single_block.png");
+                }
+
+            }
+        }
+
+        loadBorderGraphics();
+    }
+
+    private void loadBorderGraphics() {
+
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+                if (row == 0 || row == NUM_OF_ROWS - 1) {
+                    maze[row][col].setImageFilePath("hori.png");
+                } else if (col == 0 || col == NUM_OF_COLUMNS - 1) {
+                    maze[row][col].setImageFilePath("verti.png");
+                }
+            }
+        }
+
+        // load graphic for the 4 corners
+        maze[0][0].setImageFilePath("L-4.png");
+        maze[0][NUM_OF_COLUMNS - 1].setImageFilePath("L-3.png");
+        maze[NUM_OF_ROWS - 1][0].setImageFilePath("L-1.png");
+        maze[NUM_OF_ROWS - 1][NUM_OF_COLUMNS - 1].setImageFilePath("L-2.png");
+
+        loadSpecialBorderGraphics();
+
+    }
+
+    /**
+     * This function helps draw graphics for double walls around borders.
+     * The boolean temporary variables are named according to the cardinal directions
+     * North, East, South, West, and the directions in between
+     */
+    private void loadSpecialBorderGraphics() {
+        for (int row = 0; row < NUM_OF_ROWS; row++) {
+            for (int col = 0; col < NUM_OF_COLUMNS; col++) {
+
+                // ignore corner blocks
+                if ((row == 0 && col == 0) ||
+                        (row == 0 && col == NUM_OF_COLUMNS - 1) ||
+                        (row == NUM_OF_ROWS - 1 && col == 0) ||
+                        (row == NUM_OF_ROWS - 1 && col == NUM_OF_COLUMNS - 1)
+                ) {
+                    continue;
+                }
+
+                // top border
+                if (row == 0) {
+                    boolean sw = !maze[row + 1][col - 1].isPassable();
+                    boolean s = !maze[row + 1][col].isPassable();
+                    boolean se = !maze[row + 1][col + 1].isPassable();
+                    
+                    if (sw && s && se) {
+                        maze[row + 1][col].setImageFilePath("hori.png");
+
+                    } else if (sw && s) {
+                        maze[row][col].setImageFilePath("T-3.png");
+                        maze[row + 1][col].setImageFilePath("L-2.png");
+
+                    } else if (s && se) {
+                        maze[row][col].setImageFilePath("T-3.png");
+                        maze[row + 1][col].setImageFilePath("L-1.png");
+
+                    } else if (s) {
+                        maze[row][col].setImageFilePath("T-3.png");
+                        maze[row + 1][col].setImageFilePath("verti.png");
+                    }
+
+                }
+
+                // bottom border
+                else if (row == NUM_OF_ROWS - 1) {
+                    boolean nw = !maze[row - 1][col - 1].isPassable();
+                    boolean n = !maze[row - 1][col].isPassable();
+                    boolean ne = !maze[row - 1][col + 1].isPassable();
+
+                    if (nw && n && ne) {
+                        maze[row - 1][col].setImageFilePath("hori.png");
+
+                    } else if (nw && n) {
+                        maze[row - 1][col].setImageFilePath("L-3.png");
+                        maze[row][col].setImageFilePath("T-1.png");
+
+                    } else if (n && ne) {
+                        maze[row - 1][col].setImageFilePath("L-4.png");
+                        maze[row][col].setImageFilePath("T-1.png");
+
+                    } else if (n) {
+                        maze[row - 1][col].setImageFilePath("verti.png");
+                        maze[row][col].setImageFilePath("T-1.png");
+                    }
+                }
+
+                // left border
+                else if (col == 0) {
+                    boolean ne = !maze[row - 1][col + 1].isPassable();
+                    boolean e = !maze[row][col + 1].isPassable();
+                    boolean se = !maze[row + 1][col + 1].isPassable();
+
+                    if (ne && e && se) {
+                        maze[row][col + 1].setImageFilePath("verti.png");
+                        maze[row][col].setImageFilePath("T-4.png");
+
+                    } else if (ne && e) {
+                        maze[row][col + 1].setImageFilePath("L-2.png");
+                        maze[row][col].setImageFilePath("T-4.png");
+
+                    } else if (e && se) {
+                        maze[row][col + 1].setImageFilePath("L-3.png");
+                        maze[row][col].setImageFilePath("T-4.png");
+
+                    } else if (e) {
+                        maze[row][col + 1].setImageFilePath("hori.png");
+                        maze[row][col].setImageFilePath("T-4.png");
+                    }
+                }
+
+                // right border
+                else if (col == NUM_OF_COLUMNS - 1) {
+                    boolean nw = !maze[row - 1][col - 1].isPassable();
+                    boolean w = !maze[row][col - 1].isPassable();
+                    boolean sw = !maze[row + 1][col - 1].isPassable();
+
+                    if (nw && w && sw) {
+                        maze[row][col - 1].setImageFilePath("verti.png");
+
+
+                    } else if (nw && w) {
+                        maze[row][col - 1].setImageFilePath("L-1.png");
+                        maze[row][col].setImageFilePath("T-2.png");
+
+                    } else if (w && sw) {
+                        maze[row][col - 1].setImageFilePath("L-4.png");
+                        maze[row][col].setImageFilePath("T-2.png");
+
+                    } else if (w) {
+                        maze[row][col - 1].setImageFilePath("hori.png");
+                        maze[row][col].setImageFilePath("T-2.png");
+                    }
+                }
+
+
+            }
+        }
+    }
+
 
     // getters
 

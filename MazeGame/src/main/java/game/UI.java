@@ -1,6 +1,7 @@
 package game;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -8,9 +9,12 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class UI extends Application {
 
@@ -19,62 +23,62 @@ public class UI extends Application {
     private static final double PLAYER_HEIGHT = 32 * 1.5;
     private static final double PLAYER_HEIGHT_OFFSET = TILE_SIZE - PLAYER_HEIGHT;
 
+
     // Placeholder images
     private Image imgPlayer;
     private Image imgWall;
     private Image imgFloor;
     private Image imgCheese;
     private Image imgDark;
+    private final Map<String, Image> imageCache = new HashMap<>();
     private Client client = new Client();
+
+    // Scenes
+    private Scene menuScene;
+    private Stage primaryStage;
 
     // Maze instance
     private Maze maze;
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         // Menu Screen
         Button startButton = new Button("Start Game");
         Button howToPlayButton = new Button("How To Play");
 
         VBox menuLayout = new VBox(20, startButton, howToPlayButton);
         menuLayout.setAlignment(Pos.CENTER);
-        Scene menuScene = new Scene(menuLayout, 400, 300);
-        try {
-            maze = client.setupConnection();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        // Cleanup for when the window close
-        primaryStage.setOnCloseRequest(event -> {
-            System.out.println("Application closing, cleaning up connections...");
-            client.cleanup();
+        Image backgroundImage = loadImage("Welcome.png");
 
-            // Force exit if cleanup takes too long
-            new Thread(() -> {
-                try {
-                    Thread.sleep(2000); // Wait 2 seconds for graceful cleanup
-                    System.exit(0); // Force exit if still running
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }).start();
-        });
+        BackgroundImage bgImage = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO,
+                        false, false, true, false)
+        );
 
-        // Keep the shutdown hook as backup for JVM shutdown
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("JVM shutting down, cleaning up...");
-            client.cleanup();
-        }));
+        menuLayout.setBackground(new Background(bgImage));
+
+        menuScene = new Scene(menuLayout, 32 * 20, 32 * 20);
+//        try {
+//            maze = client.setupConnection();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
         // Create the Maze object (generates the 2D array)
-        // maze = new Maze();
-        // maze.placeCheeseRandomly();
+         maze = new Maze();
+         maze.placeCheeseRandomly();
+         maze.revealEntireMaze();
 
         // Load images (make sure these are in src/main/resources/game/)
-        imgPlayer = loadImage("1-1.png");
-        imgWall = loadImage("wall_placeholder.png");
-        imgFloor = loadImage("floor_placeholder.png");
+        imgPlayer = loadImage("player_sprites/1-1.png");
+        imgWall   = loadImage("wall_placeholder.png");
+        imgFloor  = loadImage("Floor.png");
         imgCheese = loadImage("Cheese.png");
         imgDark = loadImage("dark_placeholder.png");
 
@@ -101,6 +105,7 @@ public class UI extends Application {
                 case S -> maze.moveWithUserInput('s', client);
                 case D -> maze.moveWithUserInput('d', client);
                 default -> {
+                    showGameEndScreen(1);
                     // ignore other keys
                 }
             }
@@ -142,8 +147,10 @@ public class UI extends Application {
 
                 if (!obj.isVisible()) {
                     drawImage(gc, imgDark, row, col);
+
                 } else if (!obj.isPassable()) {
-                    drawImage(gc, imgWall, row, col);
+                    Image wallImage = getCachedImage(obj.getImageFilePath());
+                    drawImage(gc, wallImage, row, col);
                 } else {
                     drawImage(gc, imgFloor, row, col);
                 }
@@ -179,7 +186,54 @@ public class UI extends Application {
 
     private Image loadImage(String filename) {
         return new Image(getClass().getResourceAsStream("/game/" + filename));
+
     }
+
+    private Image getCachedImage(String filename) {
+        if (imageCache.containsKey(filename)) {
+            return imageCache.get(filename);
+        } else {
+            Image img = loadImage(filename);
+            imageCache.put(filename, img);
+            return img;
+        }
+    }
+
+    private Scene buildEndGameScene(int playerId, Stage primaryStage, Scene menuScene) {
+        // Determine which image to use based on who won
+        String winnerImageFile = "Win" + (playerId + 1) + ".png";
+        Image winnerImage = loadImage(winnerImageFile);
+
+        BackgroundImage bgImage = new BackgroundImage(
+                winnerImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, false)
+        );
+
+        // Back to main menu button
+        Button backToMenuButton = new Button("Back to Main Menu");
+        backToMenuButton.setOnAction(e -> {
+            primaryStage.setScene(menuScene);
+        });
+
+        VBox endLayout = new VBox(20, backToMenuButton);
+        endLayout.setAlignment(Pos.BOTTOM_CENTER);
+        endLayout.setBackground(new Background(bgImage));
+        endLayout.setPadding(new Insets(0, 0, 40, 0));
+
+        return new Scene(endLayout, 32 * 20, 32 * 20);
+    }
+
+    private void showGameEndScreen(int winnerId) {
+        Scene endGameScene = buildEndGameScene(winnerId, primaryStage, menuScene);
+        primaryStage.setScene(endGameScene);
+    }
+
+
+
+
 
     public static void main(String[] args) {
         launch(args);
