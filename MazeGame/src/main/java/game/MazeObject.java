@@ -173,7 +173,7 @@ public class MazeObject {
 
 
     public String getImageFilePath() {
-        return imageFilePath;
+        return "wall_sprites/"  + imageFilePath;
     }
 
     public void setImageFilePath(String imageFilePath) {
