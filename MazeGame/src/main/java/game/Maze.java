@@ -390,8 +390,10 @@ public class Maze {
             MazeObject temp = maze[cheeseRow][cheeseCol];
             // If not a wall or a player, place cheese there
             if (temp.isPassable() && !checkForPlayer(-1, cheeseRow, cheeseCol)) {
+                System.out.println("Cell is passable = " + temp.isPassable());
                 cheese = new Cheese(cheeseCol, cheeseRow);
                 System.out.println("Cheese at " + cheeseRow + ", " + cheeseCol);
+
                 ret[0] = cheeseRow;
                 ret[1] = cheeseCol;
                 return ret;
