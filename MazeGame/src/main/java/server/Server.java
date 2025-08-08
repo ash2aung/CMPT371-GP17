@@ -38,13 +38,13 @@ public class Server {
     private static int[] score = new int[4];
 
     public static void main(String args[]) throws IOException {
-        System.out.println("\n\nWelcome to Rat\n");
-        RatPrinter.printRat();
         try {
             serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
             System.out.println("Server started on port: " + PORT);
 
             while (true) {
+                System.out.println("\n\nWelcome to Rat\n");
+                RatPrinter.printRat();
                 launchMatch();
                 // Once a match ends, relaunch match with reset state
             }
