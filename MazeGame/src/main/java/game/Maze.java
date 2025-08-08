@@ -153,6 +153,9 @@ public class Maze {
     }
 
     private boolean checkForCheese(int row, int col) {
+        if (cheese == null) {
+            return false;
+        }
         return (row == cheese.getRow() && col == cheese.getCol());
     }
 
