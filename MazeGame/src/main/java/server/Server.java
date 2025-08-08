@@ -324,6 +324,7 @@ public class Server {
     }
 
     private static void broadcastPlayerMove(PlayerMove move) {
+        System.out.println("Broadcasting player move from player id " + move.getPlayerId());
         int playerId = move.getPlayerId();
         int row = move.getRow();
         int col = move.getCol();
@@ -366,6 +367,7 @@ public class Server {
         for (ClientHandler client : clients.values()) {
             if (excludePlayerId == -1 || client.playerId != excludePlayerId) {
                 try {
+                    System.out.println("Sending packet to player: " + client.playerId);
                     client.out.write(packet);
                     client.out.flush();
                 } catch (Exception e) {
