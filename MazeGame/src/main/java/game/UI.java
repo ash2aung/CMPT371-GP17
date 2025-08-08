@@ -107,7 +107,7 @@ public class UI extends Application {
                 case S -> maze.moveWithUserInput('s');
                 case D -> maze.moveWithUserInput('d');
                 default -> {
-                    testEndGameScene(1);
+                    showGameEndScreen(1);
                     // ignore other keys
                 }
             }
@@ -231,7 +231,7 @@ public class UI extends Application {
         return new Scene(endLayout, 32 * 20, 32 * 20);
     }
 
-    private void testEndGameScene(int winnerId) {
+    private void showGameEndScreen(int winnerId) {
         Scene endGameScene = buildEndGameScene(winnerId, primaryStage, menuScene);
         primaryStage.setScene(endGameScene);
     }
