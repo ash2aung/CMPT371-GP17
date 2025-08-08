@@ -127,6 +127,7 @@ public class Server {
 
                         // c for cheese found => valid move
                         case ('c') -> {
+                            System.out.println("Cheese collected");
                             cheeseCoords = maze.placeCheeseRandomly();
                             broadcastCheeseCollection(move.getPlayerId(), move.getRow(), move.getCol(), cheeseCoords[0],
                                     cheeseCoords[1]);
@@ -340,6 +341,7 @@ public class Server {
 
     private static void broadcastCheeseCollection(int playerId, int playerRow, int playerCol, int newCheeseRow,
             int newCheeseCol) {
+                System.out.println("Broadcasting new Cheese");
         byte[] cheesePacket = new byte[4];
         // Token: 0b011 (CHEESE_COLLECTED)
         cheesePacket[0] = (byte) (0b01100000 | ((playerId & 0b11) << 3) | ((playerRow >> 2) & 0b111));

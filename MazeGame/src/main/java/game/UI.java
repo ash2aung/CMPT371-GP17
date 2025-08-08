@@ -30,6 +30,9 @@ public class UI extends Application implements ClientEventListener { // TODO: Co
     // Maze instance
     private Maze maze;
 
+    // UI Components
+    private GraphicsContext gc;
+
     @Override
     public void start(Stage primaryStage) {
         // Menu Screen
@@ -88,7 +91,7 @@ public class UI extends Application implements ClientEventListener { // TODO: Co
 
         // Canvas size based on maze dimensions
         Canvas canvas = new Canvas(cols * TILE_SIZE, rows * TILE_SIZE);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc = canvas.getGraphicsContext2D();
 
         // Draw the board once
         drawBoard(gc);
@@ -138,12 +141,16 @@ public class UI extends Application implements ClientEventListener { // TODO: Co
 
     @Override
     public void onMoveReceived(int playerID, int row, int col) {
+        System.out.println("UI: Move received for player " + playerID);
         maze.movePlayer(playerID, row, col);
+        drawBoard(gc);
     }
 
     @Override
     public void onCheeseReceived(int row, int col) {
+        System.out.println("UI: Cheese received");
         maze.placeCheeseAt(row, col);
+        drawBoard(gc);
     }
 
     private void drawBoard(GraphicsContext gc) {

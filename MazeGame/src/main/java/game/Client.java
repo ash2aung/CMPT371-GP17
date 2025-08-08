@@ -76,6 +76,7 @@ public class Client {
                 int playerID = ((input[0] >> 3) & 0b00000011);
                 int newRow = ((input[0] & 0b00000111) << 2) | ((input[1] >> 6) & 0b00000011);
                 int newCol = ((input[1] >> 1) & 0b00011111);
+                System.out.println("Client: Received move packet for player " + playerID);
                 notifyUIMove(playerID, newRow, newCol);
                 break;
             }
@@ -86,6 +87,7 @@ public class Client {
                 int newPlayerCol = ((input[1] >> 1) & 0b00011111);
                 int newCheeseRow = ((input[1] & 0b00000001) << 4) | ((input[2] >> 4) & 0b00001111);
                 int newCheeseCol = ((input[2] & 0b00001111) << 1) | ((input[3] >> 7) & 0b00000001);
+                System.out.println("Client: Received new Cheese at " + newCheeseRow + ", " + newCheeseCol);
                 notifyUIMove(playerID, newPlayerRow, newPlayerCol);
                 notifyUICheese(newCheeseRow, newCheeseCol);
 
@@ -129,6 +131,8 @@ public class Client {
                         }
                         bytesRead += result;
                     }
+
+                    System.out.println("Received packet from server");
 
                     if (isConnected) {
                         boolean continueLoop = processOtherServerPacket(input);
@@ -245,6 +249,7 @@ public class Client {
                     // Cheese
                     // TODO: Currently overriding decorations on this
                     // tile
+                    maze.getMaze()[row][col].passable = true;
                     maze.placeCheeseAt(row, col);
                     break;
                 }
