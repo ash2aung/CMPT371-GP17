@@ -136,7 +136,7 @@ public class Maze {
      * @param col      Column number
      * @return True if collision, false otherwise
      */
-    private boolean checkForPlayer(int playerId, int row, int col) {
+    public boolean checkForPlayer(int playerId, int row, int col) {
 
         for (int i = 0; i < 4; i++) {
             if (i == playerId) {

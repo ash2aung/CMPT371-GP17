@@ -120,7 +120,7 @@ public class Server {
                         // i for invalid move
                         case ('i') -> {
                             // Still must send the player's old move to indicate they haven't moved
-                            broadcastPlayerMove(
+                            broadcastInvalidMove(
                                     new PlayerMove(move.getPlayerId(), maze.getPlayers()[move.getPlayerId()].getRow(),
                                             maze.getPlayers()[move.getPlayerId()].getCol()));
                         }
@@ -309,15 +309,20 @@ public class Server {
                 return 'c';
 
             } else if (!temp.isPassable()) {
-                // Player collision (can't be a wall because client checks for that)
-                // Play bonk sound?
+                // TODO: This can never be reached as client-side checks if the player is attempting to walk into a wall
+                //  Remove this?
 
                 System.out.println("Player at " + move.getRow() + ", " + move.getCol());
                 return 'i';
             } else {
-                // Player successfully moved
+                System.out.println("Player has not collected cheese... ");
+                if (maze.checkForPlayer(move.getPlayerId(), move.getRow(), move.getCol())) {
+                    // Player collision!
+                    System.out.println("And player collision detected!\n");
+                    return 'i';
+                }
 
-                // Update player position internally
+                System.out.println("But player has made a valid move!\n");
                 maze.movePlayer(move.getPlayerId(), move.getRow(), move.getCol());
 
                 return 'v';
@@ -341,6 +346,21 @@ public class Server {
         movePacket[3] = 0; // Unused
 
         broadcast(movePacket, playerId);
+    }
+
+    private static void broadcastInvalidMove(PlayerMove move) {
+        int playerId = move.getPlayerId();
+        int row = move.getRow();
+        int col = move.getCol();
+
+        byte[] movePacket = new byte[4];
+            // Token: 0b010 (MOVE)
+        movePacket[0] = (byte) (0b01000000 | ((playerId & 0b11) << 3) | ((row >> 2) & 0b111));
+        movePacket[1] = (byte) (((row & 0b11) << 6) | ((col & 0b11111) << 1));
+        movePacket[2] = 0; // Unused
+        movePacket[3] = 0; // Unused
+
+        broadcast(movePacket, -1);
     }
 
     private static void broadcastCheeseCollection(int playerId, int playerRow, int playerCol, int newCheeseRow,
