@@ -88,7 +88,7 @@ public class Client {
                 int newCheeseCol = ((input[2] & 0b00001111) << 1) | ((input[3] >> 7) & 0b00000001);
                 notifyUIMove(playerID, newPlayerRow, newPlayerCol);
                 notifyUICheese(newCheeseRow, newCheeseCol);
-                
+
                 // moveUserFromID(playerID, newPlayerRow, newPlayerCol); CHECK IF ID = USER &&
                 // THEY HAVEN'T MOVED => server accepts their move
                 // updateVisibilityAroundPlayer();
