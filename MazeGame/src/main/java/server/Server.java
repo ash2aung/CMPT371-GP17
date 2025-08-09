@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 // Some basic setups for the server, will need to implement a lot of the server functions
@@ -31,7 +32,8 @@ public class Server {
     // moves then queues to this queue.
     private static int[] cheeseCoords = new int[2]; // I've decided that it's fine and better to keep cheeseCoords
     private static final int CHEESE_TO_WIN = 3;
-    // Change: See line 23 and line 146
+    // For pre-match waiting phase (wait for 4 players to connect)
+    private static volatile boolean connectionPhaseActive = true;
     private static List<Integer> availablePlayerIds;
     private static Maze maze;
     // Match state
@@ -56,6 +58,8 @@ public class Server {
 
     private static void launchMatch() throws Exception {
         matchInit();
+        connectionPhaseActive = true;
+
         try {
             serverSocket.setSoTimeout(2000); // 1 second timeout
         } catch (SocketException e) {
@@ -70,14 +74,15 @@ public class Server {
                 System.out.println("Incoming connection attempt from " + clientSocket.getInetAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
             } catch (SocketTimeoutException e) {
-                // Do nothing
-            } catch (Exception e) {
+                checkConnectionsDuringWait();
+            } catch (IOException e) {
                 e.printStackTrace();
                 return; // early exit
             }
         }
-
+        connectionPhaseActive = false; // No longer in connection phase
         System.out.println("4 players connected.");
+
         synchronized (availablePlayerIds) {
             if (availablePlayerIds.size() == 0) {
                 availablePlayerIds.notifyAll();
@@ -230,6 +235,7 @@ public class Server {
         try (BufferedReader inReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 InputStream in = clientSocket.getInputStream();
                 OutputStream out = clientSocket.getOutputStream()) {
+
             // Read and validate auth string
             char[] authBuffer = new char[VALID_AUTH.length()];
             inReader.read(authBuffer, 0, VALID_AUTH.length());
@@ -243,7 +249,6 @@ public class Server {
             // Assign player ID and send to the client
             playerId = getNextPlayerId();
             System.out.println("Available ids: " + availablePlayerIds);
-
             System.out.println("Assigned player Id: " + playerId);
             out.write(playerId);
 
@@ -251,21 +256,41 @@ public class Server {
             ClientHandler clientHandler = new ClientHandler(playerId, clientSocket, in, out);
             clients.put(playerId, clientHandler);
 
-            // Afterall initial setups done, wait for all 4 players to join before starting
-            // the game
-            waitUntilNoAvailableIds();
+            // Wait for all 4 players to join - with disconnect detection
+            try {
+                waitUntilNoAvailableIds();
 
+                // Double-check that this client is still connected after the wait
+                if (clientSocket.isClosed() || !testClientConnection(clientHandler)) {
+                    throw new IOException("Client disconnected during wait phase");
+                }
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Wait interrupted");
+            }
+
+            // Proceed to handle messages only if still connected
             clientHandler.handleMessages();
+
         } catch (IOException e) {
-            // Add the assigned player id back into the list of available ones
+            System.err.println("Client " + playerId + " error: " + e.getMessage());
+
+            // Clean up: return player ID to available list if assigned
             if (playerId != -1) {
                 try {
-                    addPlayerId(playerId);
+                    clients.remove(playerId);
+
+                    // Only add back to available IDs if we're still in connection phase
+                    if (connectionPhaseActive) {
+                        addPlayerId(playerId);
+                        System.out.println(
+                                "Returned player ID " + playerId + " due to client error during connection phase");
+                    }
                 } catch (Exception e2) {
-                    e2.printStackTrace();
+                    System.err.println("Error returning player ID " + playerId + ": " + e2.getMessage());
                 }
             }
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -548,39 +573,6 @@ public class Server {
             return new PlayerMove(playerId, newRow, newCol);
         }
 
-        // Function for validating a player move
-        // private static boolean validateMove(PlayerMove move) {
-        // int id = move.getPlayerId();
-        // int row = move.getRow();
-        // int col = move.getCol();
-        // // Check if the move is within maze bounds
-        // if (row < 0 || row >= 32 || col < 0 || col >= 32) {
-        // return false;
-        // }
-
-        // // Check if the destination tile is passable
-        // MazeObject targetTile = maze.getMaze()[row][col];
-        // if (!targetTile.isPassable()) {
-        // return false;
-        // }
-
-        // // check if move is adjacent to current position
-        // Player player = maze.getPlayers()[id];
-        // int currRow = player.getRow();
-        // int currCol = player.getCol();
-        // if (Math.abs(row - currRow) > 1) {
-        // System.err.println("Illegal move: prev row = " + currRow + ", new row = " +
-        // row);
-        // return false;
-        // } else if (Math.abs(col - currCol) > 1) {
-        // System.err.println("Illegal move: prev col = " + currCol + ", new col = " +
-        // col);
-        // return false;
-        // }
-
-        // return true;
-        // }
-
         public int getId() {
             return playerId;
         }
@@ -590,9 +582,77 @@ public class Server {
     // Function for threads (connected players) to wait until the list is empty
     public static void waitUntilNoAvailableIds() throws InterruptedException {
         synchronized (availablePlayerIds) {
-            while (!availablePlayerIds.isEmpty()) {
-                availablePlayerIds.wait(); // Wait until notified and list is empty
+            while (!availablePlayerIds.isEmpty() && connectionPhaseActive) {
+                // Start a background thread to monitor existing connections
+                Thread connectionMonitor = new Thread(() -> {
+                    try {
+                        Thread.sleep(2000); // Check every 2 seconds
+                        checkConnectionsDuringWait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+                connectionMonitor.setDaemon(true);
+                connectionMonitor.start();
+
+                // Wait for either all players to connect or a timeout
+                availablePlayerIds.wait(5000); // 5 second timeout
+
+                // If we're still waiting but some clients might have disconnected, check them
+                if (!availablePlayerIds.isEmpty()) {
+                    checkConnectionsDuringWait();
+                }
             }
+        }
+    }
+
+    private static void checkConnectionsDuringWait() {
+        List<Integer> disconnectedPlayers = new ArrayList<>();
+
+        // Iterate through clients (ConcurrentHashMap is safe for iteration)
+        for (Map.Entry<Integer, ClientHandler> entry : clients.entrySet()) {
+            ClientHandler client = entry.getValue();
+
+            // Test if client is still connected
+            if (client.socket.isClosed() || !testClientConnection(client)) {
+                System.out.println("Detected disconnection of player " + entry.getKey() + " during wait phase");
+                disconnectedPlayers.add(entry.getKey());
+            }
+        }
+
+        // Return disconnected player IDs back to available list
+        for (Integer playerId : disconnectedPlayers) {
+            try {
+                // Remove from clients map (atomic operation)
+                ClientHandler removed = clients.remove(playerId);
+                if (removed != null) {
+                    addPlayerId(playerId);
+                    System.out.println("Returned player ID " + playerId + " to available list due to disconnection");
+                }
+            } catch (Exception e) {
+                System.err.println("Error returning player ID " + playerId + " to available list: " + e.getMessage());
+            }
+        }
+    }
+
+    private static boolean testClientConnection(ClientHandler client) {
+        try {
+            // Simple test: check socket status
+            if (client.socket.isClosed() || !client.socket.isConnected()) {
+                return false;
+            }
+
+            // More thorough test: try to send a small packet
+            byte[] testPacket = new byte[1];
+            testPacket[0] = (byte) 0b11110000; // Test token
+
+            client.out.write(testPacket);
+            client.out.flush();
+
+            return true;
+        } catch (IOException e) {
+            System.out.println("Client connection test failed: " + e.getMessage());
+            return false;
         }
     }
 

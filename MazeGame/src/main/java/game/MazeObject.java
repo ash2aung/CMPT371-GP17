@@ -20,7 +20,7 @@ public class MazeObject {
     protected boolean passable = true;
     protected boolean visible = false;
 
-    private String imageFilePath = "wall_placeholder.png";
+    private String imageFilePath = "Single_block.png";
 
     /**
      * Only used for Paths and Walls

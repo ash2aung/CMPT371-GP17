@@ -52,7 +52,6 @@ public class Maze {
         addPlayerToBoard(3, NUM_OF_ROWS - 2, NUM_OF_COLUMNS - 2);
 
         removeWallsAroundPlayers();
-        loadWallGraphics();
     }
 
     /**
@@ -393,7 +392,7 @@ public class Maze {
                 // Horizontal and Vertical
                 else if (left && right) {
                     obj.setImageFilePath("hori.png");
-                } else if (top && bot){
+                } else if (top && bot) {
                     obj.setImageFilePath("verti.png");
                 } else if (left || right) {
                     obj.setImageFilePath("hori.png");
@@ -433,7 +432,8 @@ public class Maze {
 
     /**
      * This function helps draw graphics for double walls around borders.
-     * The boolean temporary variables are named according to the cardinal directions
+     * The boolean temporary variables are named according to the cardinal
+     * directions
      * North, East, South, West, and the directions in between
      */
     private void loadSpecialBorderGraphics() {
@@ -444,8 +444,7 @@ public class Maze {
                 if ((row == 0 && col == 0) ||
                         (row == 0 && col == NUM_OF_COLUMNS - 1) ||
                         (row == NUM_OF_ROWS - 1 && col == 0) ||
-                        (row == NUM_OF_ROWS - 1 && col == NUM_OF_COLUMNS - 1)
-                ) {
+                        (row == NUM_OF_ROWS - 1 && col == NUM_OF_COLUMNS - 1)) {
                     continue;
                 }
 
@@ -454,7 +453,7 @@ public class Maze {
                     boolean sw = !maze[row + 1][col - 1].isPassable();
                     boolean s = !maze[row + 1][col].isPassable();
                     boolean se = !maze[row + 1][col + 1].isPassable();
-                    
+
                     if (sw && s && se) {
                         maze[row + 1][col].setImageFilePath("hori.png");
 
@@ -529,7 +528,6 @@ public class Maze {
                     if (nw && w && sw) {
                         maze[row][col - 1].setImageFilePath("verti.png");
 
-
                     } else if (nw && w) {
                         maze[row][col - 1].setImageFilePath("L-1.png");
                         maze[row][col].setImageFilePath("T-2.png");
@@ -544,11 +542,9 @@ public class Maze {
                     }
                 }
 
-
             }
         }
     }
-
 
     // getters
 

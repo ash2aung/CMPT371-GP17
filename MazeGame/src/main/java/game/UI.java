@@ -68,12 +68,58 @@ public class UI extends Application implements ClientEventListener {
 
         menuScene = new Scene(menuLayout, 32 * 20, 32 * 20);
 
-        try {
-            maze = client.setupConnection();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // primaryStage.setScene(scene);
+        // primaryStage.setTitle("Maze Game");
+        // primaryStage.show();
 
+        // Button actions
+        startButton.setOnAction(e -> {
+            // Disable button and show loading state
+            startButton.setText("Connecting...");
+            startButton.setDisable(true);
+
+            // Create a background thread for connection
+            new Thread(() -> {
+                try {
+                    // Switch back to UI thread for UI updates
+                    Platform.runLater(() -> {
+                        setupGameScene();
+                    });
+                    maze = client.setupConnection();
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+
+                    // Re-enable button on error
+                    Platform.runLater(() -> {
+                        startButton.setText("Start Game");
+                        startButton.setDisable(false);
+
+                        // Show error dialog
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Connection Error");
+                        alert.setHeaderText("Failed to connect");
+                        alert.setContentText("Could not establish connection. Please try again.");
+                        alert.showAndWait();
+                    });
+                }
+            }).start();
+        });
+
+        howToPlayButton.setOnAction(e -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("How To Play");
+            alert.setHeaderText("Instructions");
+            alert.setContentText("Use WASD keys to move your player around the maze and collect cheese.");
+            alert.showAndWait();
+        });
+
+        // Show menu scene first
+        primaryStage.setScene(menuScene);
+        primaryStage.setTitle("Maze Game");
+        primaryStage.show();
+    }
+
+    private void setupGameScene() {
         // Cleanup for when the window close
         primaryStage.setOnCloseRequest(event -> {
             System.out.println("Application closing, cleaning up connections...");
@@ -84,7 +130,7 @@ public class UI extends Application implements ClientEventListener {
                 try {
                     Thread.sleep(2000); // Wait 2 seconds for graceful cleanup
                     System.exit(0); // Force exit if still running
-                } catch (InterruptedException e) {
+                } catch (InterruptedException e3) {
                     Thread.currentThread().interrupt();
                 }
             }).start();
@@ -96,17 +142,12 @@ public class UI extends Application implements ClientEventListener {
             client.cleanup();
         }));
 
-        // Create the Maze object (generates the 2D array)
-        // maze = new Maze();
-        // maze.placeCheeseRandomly();
-        // maze.revealEntireMaze();
-
-        // Load images (make sure these are in src/main/resources/game/)
+        // Load images
         imgPlayer = loadImage("player_sprites/1-1.png");
-        imgWall = loadImage("wall_sprites/wall_placeholder.png");
+        imgWall = loadImage("wall_sprites/Single_block.png");
         imgFloor = loadImage("Floor.png");
         imgCheese = loadImage("Cheese.png");
-        imgDark = loadImage("dark_placeholder.png");
+        imgDark = loadImage("undiscovered.jpeg");
 
         // Get maze size from Maze class
         MazeObject[][] grid = maze.getMaze();
@@ -131,7 +172,6 @@ public class UI extends Application implements ClientEventListener {
                 case S -> maze.moveWithUserInput('s', client);
                 case D -> maze.moveWithUserInput('d', client);
                 default -> {
-                    // showGameEndScreen(1);
                     // ignore other keys
                 }
             }
@@ -139,29 +179,9 @@ public class UI extends Application implements ClientEventListener {
             drawBoard(gc);
         });
 
-        // primaryStage.setScene(scene);
-        // primaryStage.setTitle("Maze Game");
-        // primaryStage.show();
-
-        // Button actions
-        startButton.setOnAction(e -> {
-            primaryStage.setScene(gameScene);
-            drawBoard(gc); // Draw initial board when starting
-            canvas.requestFocus(); // Make sure key events go to canvas
-        });
-
-        howToPlayButton.setOnAction(e -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("How To Play");
-            alert.setHeaderText("Instructions");
-            alert.setContentText("Use WASD keys to move your player around the maze and collect cheese.");
-            alert.showAndWait();
-        });
-
-        // Show menu scene first
-        primaryStage.setScene(menuScene);
-        primaryStage.setTitle("Maze Game");
-        primaryStage.show();
+        primaryStage.setScene(gameScene);
+        drawBoard(gc); // Draw initial board when starting
+        canvas.requestFocus(); // Make sure key events go to canvas
     }
 
     @Override
