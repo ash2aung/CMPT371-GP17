@@ -438,6 +438,10 @@ public class Server {
         for (ClientHandler client : clients.values()) {
             System.out.println("Sending maze to client: " + client.getId());
             try {
+                byte[] startSignal = new byte[1];
+                startSignal[0] = (byte) 0b10100000;
+                client.out.write(startSignal);
+                client.out.flush();
                 client.out.write(mazePacket);
                 client.out.flush();
                 System.out.println("Sent maze to client id: " + client.getId());

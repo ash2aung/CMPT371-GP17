@@ -181,6 +181,19 @@ public class Client {
     }
 
     private static byte[] getMaze() throws IOException {
+        boolean waiting = true;
+
+        while (waiting) {
+            byte[] input = new byte[1];
+            is.read(input, 0, 1);
+            int token = (input[0] >> 4) & 0b1111;
+            if (token == 0b1111) {
+                // ping packet, ignore
+            } else {
+                waiting = false;
+            }
+        }
+
         System.out.println("Getting maze from server");
         byte[] mazeDescription = new byte[receiveMazePacketSize];
         int totalbytesRead = 0;
