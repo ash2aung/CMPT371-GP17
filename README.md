@@ -18,5 +18,11 @@ Each player can move as fast as they can type. Moving onto a cell occupied by an
 ### Maze
 To begin, most of the map will be hidden as a space will only be shown if a player has been adjacent to it at some point during the current game. Unrevealed spaces will be displayed as black tiles. Regardless of whether a player has discovered the space an enemy or the Cheese is on, it will always be visible on the map. Additionally, the outer border of walls will always be shown. Each player can see where every other player is and has been.
 ## How To Play
-Requires 4 concurrent players. Each must checkout the main branch, cd into the MazeGame directory, then run the following command: "mvn javafx:run". Only when all 4 players have connected to the server, and have received confirmation via their User ID in the local terminal, will the game begin.
-NOTE: Connecting more than 4 terminals will cause the server to crash. Do not connect > 4 players at one time. After a match has finished, 4 new players may connect.
+Clone the repository from the github link above and make sure you are on the main branch.
+
+In the directory MazeGame, run the command “mvn javafx:run”.
+
+(If you are a single person on a windows machine, you can run ./run4clients.bat which is a script that opens 4 terminals and run the start command in each, for convenient testing) 
+
+The game requires 4 concurrent players. The Client attempts to connect to the server by pressing the “Start game” button. Once all 4 players have connected, the game will begin.
+
