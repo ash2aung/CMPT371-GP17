@@ -24,5 +24,6 @@ In the directory MazeGame, run the command “mvn javafx:run”.
 
 (If you are a single person on a windows machine, you can run ./run4clients.bat which is a script that opens 4 terminals and run the start command in each, for convenient testing) 
 
-The game requires 4 concurrent players. The Client attempts to connect to the server by pressing the “Start game” button. Once all 4 players have connected, the game will begin.
+The game requires 4 concurrent players. The Client attempts to connect to the Server by pressing the “Start game” button. Once all 4 players have connected, the game will begin.
 
+Note: The Server currently only serve 4 Clients for a match at a time. Extra connection attempts beyond the 4 required will be queued for the next match (which begins when the current match ends and the server automatically disconnects from all 4 players).
